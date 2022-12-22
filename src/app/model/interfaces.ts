@@ -1,26 +1,30 @@
+// Incorporem tant les guàrdies que cal cobrir
+// com les meues. Necessitem la data per agrupar
+// i tota la informació en text, ja que no són editables.
+// L'únic que podem fer és assignar un professor o editar
+// la feina o comentaris, i amb el ID de la guàrdia es prou.
 export interface Guard {
     data: Date;
-    // Horari: Si no és meu, no m'interessa.
-    // Camps d'horari que interessen:
-    dia: string;
     hora: string;
+    id_professor: number;
+    professor: string; // Jo o un altre
     espai: string;
     grup: string;
     materia: string;
     es_guardia: boolean;
-    professor: string;
     // fi dels camps d'horari interessants.
     // absencia: si no és meua, em dóna igual
-    substitut: string; // id o nom?
+    id_substitut: number;
+    substitut: string; // nom
     feina: string;
 }
 
-export interface GuardJSON {
+export interface GuardJSON { 
     data: string;
+    hora: string;
     // Horari: Si no és meu, no m'interessa.
     // Camps d'horari que interessen:
-    dia: string;
-    hora: string;
+    id_professor: number;
     professor: string;
     espai: string;
     grup: string;
@@ -28,6 +32,7 @@ export interface GuardJSON {
     es_guardia: boolean;
     // fi dels camps d'horari interessants.
     // absencia: si no és meua, em dóna igual
+    id_substitut: number;
     substitut: string; // id o nom?
     feina: string;
 }
@@ -41,7 +46,6 @@ export interface Absence {
     dia_complet: boolean;
     extraescolar: boolean;
     justificada: boolean;
-    guardies: Guard[];
 }
 
 export interface AbsenceJSON {
@@ -53,5 +57,4 @@ export interface AbsenceJSON {
     dia_complet: boolean;
     extraescolar: boolean;
     justificada: boolean;
-    guardies: Guard[];
 }

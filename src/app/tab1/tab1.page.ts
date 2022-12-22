@@ -141,7 +141,7 @@ doLogin(){
 // ###############################
   async llistaAbsencies() {
     var l_buttons: any[] = [];
-    var a: Absencia;
+    var a: Absence;
     console.log('longitud del menu absencies: ', this.absenciesService.absences.list);
     for (var i =0; i < this.absenciesService.absences.list.length; i++) {
       a = this.absenciesService.absences.list[i];
@@ -237,7 +237,6 @@ doLogin(){
       hora_fi: this.hora_fi,
       extraescolar: false,
       justificada: false,
-      guardies: []
     }
     console.log("al tancar modal, amb id: ", absencia_modif.id);
     this.absenciesService.absences.update(absencia_modif);

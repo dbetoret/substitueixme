@@ -18,7 +18,7 @@ export class GuardiesComponent implements OnInit {
 
   ngOnInit(): void {
     
-      this.data.guards.getFromDate();
+      this.data.guards.get();
     
   }
 

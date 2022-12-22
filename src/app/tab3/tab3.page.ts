@@ -215,7 +215,7 @@ export class Tab3Page {
   }
 
   meCanviaEspai(espai, i){
-
+    this.mCreaModificaNom('Modifica','espai', espai, i);
   }
 
   async mCreaModificaNom(accio: string, tipus: string, nom: any, index: number){
@@ -223,9 +223,9 @@ export class Tab3Page {
     let i = index;
     console.log (" i i index: ", i, ' ', index);
     if (index === -1){
-      if (tipus === 'grup') {  i =  -1*this.aS.grups.size; }
-      if (tipus === 'espai') { i =  -1*this.aS.espais.size; }
-      if (tipus === 'matèria') { i =  -1*this.aS.materies.size; }
+      if (tipus === 'grup') {  i =  -1*(this.aS.grups.size+1); }
+      if (tipus === 'espai') { i =  -1*(this.aS.espais.size+1); }
+      if (tipus === 'matèria') { i =  -1*(this.aS.materies.size+1); }
       // console.log("el nou index és: ", i, ' de la llista ', this.aS.grups);
     }
     const alert = await this.alertCtrl.create({

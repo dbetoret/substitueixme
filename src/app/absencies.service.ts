@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Guardia } from './guardia';
 import { Absencia, AbsenciaS } from './absencia';
 import { DadesMestres, Franja_horaria, Espai, Grup, Materia, Horari } from './dadesmestres';
 import { Observable, of, throwError } from 'rxjs';
@@ -45,30 +44,9 @@ class Dates {
 }
 
 
-export class TodayGuards {
-  data: string; 
-  dia_setmana: string;
-  ndia_setmana: number;
-  guardies: Guardia[];
-  parts: string[];
-
-  cds = ['Diumenge', 'Dilluns', 'Dimarts' ,'Dimecres' ,'Dijous' ,'Divendres', 'Dissabte', 'Diumenge']
-
-  constructor(d: string, gs: Guardia[]){
-    this.data=d; // en format yyyy-MM-dd
-    this.guardies = gs;
-    this.parts = d.split('-');
-    // El mes està indexat a partir de 0, així que febrer ha de ser el mes 1, mentre que el rebem en format cadena, on dóna 2.
-    this.ndia_setmana=new Date(parseInt(this.parts[0]), parseInt(this.parts[1])-1, parseInt(this.parts[2])).getDay();
-    this.dia_setmana=this.cds[this.ndia_setmana];
-    console.log('el dia ',d,' té index ', this.ndia_setmana,' i és ', this.dia_setmana);
-    
-  }
-}
-
 class Absences {
 
-  list: Absencia[] = [];
+  list: Absence[] = [];
   guardList: Guard[] = [];
   private absencesUrl = BASE_URL+'api/absencies/';
   dates: Dates = new Dates();
@@ -99,30 +77,29 @@ class Absences {
           hora_fi: this.dates.str2time(data[i].hora_fi),
           dia_complet: data[i].dia_complet,
           extraescolar: data[i].extraescolar,
-          justificada: data[i].justificada,
-          guardies: data[i].guardies
+          justificada: data[i].justificada
         })    
       }
       // La diferència entre **absències** i **guàrdies** és que 
       // una **absència** és multi-dia, i volem editar-la en bloc.
       // D'un altra banda, **guardies** conté les guàrdies d'una data
       // donada, que està associada a una absència en concret.
-      var data_g ;
-      var d_guardies = {};
-      this.guardList = [];
-      console.log("carregant absencies. Hi han ", this.list.length);
-      for (var i=0; i < this.list.length; i++){
-        if (this.list[i].guardies.length > 0 )
-          data_g =  this.list[i].guardies[0].data.toString();  // en format DD-MM-YYYY
-        console.log ("carregant guardiesl del ", data_g, '. Hi han ', this.list[i].guardies.length);
-        for (var j=0; j < this.list[i].guardies.length; j++){
-          data_g =  this.list[i].guardies[j].data.toString();
-          if (!(data_g in d_guardies))
-            d_guardies[data_g] = []
-          d_guardies[data_g].push(this.list[i].guardies[j])
-        }
-      }  
-      for (var d in d_guardies){
+      // var data_g ;
+      // var d_guardies = {};
+      // this.guardList = [];
+      // console.log("carregant absencies. Hi han ", this.list.length);
+      // for (var i=0; i < this.list.length; i++){
+      //   if (this.list[i].guardies.length > 0 )
+      //     data_g =  this.list[i].guardies[0].data.toString();  // en format DD-MM-YYYY
+      //   console.log ("carregant guardiesl del ", data_g, '. Hi han ', this.list[i].guardies.length);
+      //   for (var j=0; j < this.list[i].guardies.length; j++){
+      //     data_g =  this.list[i].guardies[j].data.toString();
+      //     if (!(data_g in d_guardies))
+      //       d_guardies[data_g] = []
+      //     d_guardies[data_g].push(this.list[i].guardies[j])
+      //   }
+      // }  
+      // for (var d in d_guardies){
         // carreguem la guardia de cada absència.
         // this.guardList.push({
         //   data:
@@ -136,11 +113,10 @@ class Absences {
         //   substitut:
         //   feina:
         // })
-        console.log("el dia ", d, " té " ,d_guardies[d].length, " guàrdies")
-      } 
-    }
-    );
-    return this.list;
+        // console.log("el dia ", d, " té " ,d_guardies[d].length, " guàrdies")
+      // } 
+    });
+    // return this.list;
   }
   
 
@@ -165,20 +141,45 @@ class Absences {
 }
 
 class Guards {
-  list: Guards[] = [];
-  guardList: TodayGuards[] = [];
-  private guardsUrl = BASE_URL+'api/guardies/';
-  dates: Dates = new Dates();
+  // Les guàrdies que deixe cada dia,
+  // per muntar la llista diària de absències.
+  AbsenceGuards: Map<string, {
+    data: string,
+    dia_setmana: string,
+    guardies: Guard[] 
+  }>;
+
+  // Guàrdies que em toca fer un determinat dia,
+  // avui o quan sigui.
+  DailyGuards: Map<string, {
+    data: string,
+    dia_setmana: string,
+    guardies: Guard[]
+  }>;
+  
+  private guardsUrl: string = BASE_URL+'api/guardies/';
+  private dates: Dates = new Dates();
 
   constructor(
     private http: HttpClient,
-    private httpOptions: {headers: HttpHeaders, params: HttpParams}
+    private httpOptions: {headers: HttpHeaders, params: HttpParams},
+    private user_id: number
   ) {}
 
-  getFromAbsence() {}
+  data: string; 
+  dia_setmana: string;
+  ndia_setmana: number;
+  guardies: Guard[];
 
-  // get guardies del dia
-  getFromDate() {
+  get(){
+    // Carregarem sempre totes les guàrdies, tot i que les pròpies es
+    // podrien evitar, ja que només es modifiquen com a conseqüència
+    // d'una absència. Carreguem tot per simplicitat.
+    var cds = ['Diumenge', 'Dilluns', 'Dimarts' ,'Dimecres' ,'Dijous' ,'Divendres', 'Dissabte', 'Diumenge']
+    var date: Date;
+    var parts: string[];
+    var dia_setmana: string;
+    var guard: Guard;
     this.http.get<GuardJSON[]>(this.guardsUrl, this.httpOptions)
     .pipe(
       catchError((err) => {
@@ -187,13 +188,46 @@ class Guards {
       })
     )
     .subscribe(data => {
-      console.log('absencies davui rebudes: ', data);
+      console.log('absencies rebudes: ', data);
       for (var i in data){
-        this.guardList.push(
-          // new TodayGuards(
-            
-          // )
-        )
+        // preparem la info:
+        date = this.dates.str2date(data[i].data);
+        // La data està en format iso YYYY-MM-DD, així que
+        // extraiem els nombres, componem la data i traiem el
+        // nº de dia de la setmana, parsejant-lo a la llista anterior.
+ // El mes està indexat a partir de 0, així que febrer ha de ser el mes 1, mentre que el rebem en format cadena, on dóna 2.
+        dia_setmana = cds[new Date(
+          parseInt(data[i].data.split('-')[0]), 
+          parseInt(data[i].data.split('-')[1])-1, 
+          parseInt(data[i].data.split('-')[2])
+        ).getDay()];
+        guard = {
+          data: date,
+          hora: data[i].hora,
+          id_professor: data[i].id_professor,
+          professor: data[i].professor,
+          espai: data[i].espai,
+          grup: data[i].grup,
+          materia: data[i].materia,
+          es_guardia: data[i].es_guardia,
+          id_substitut: data[i].id_substitut,
+          substitut: data[i].substitut,
+          feina: data[i].feina 
+        }
+        if (guard.id_professor=this.user_id){
+          this.AbsenceGuards.set(data[i].data, {
+            data: data[i].data, 
+            dia_setmana: dia_setmana, 
+            guardies: []
+          })
+        }
+        else {
+          this.DailyGuards.set(data[i].data, {
+            data: data[i].data, 
+            dia_setmana: dia_setmana, 
+            guardies: []
+          })
+        }
       }
     })
   }
@@ -241,9 +275,9 @@ export class AbsenciesService {
   };
 
 
-  absences = new Absences(this.http, this.httpOptions);
-  guards = new Guards(this.http, this.httpOptions);
   user = new User(this.http, this.httpOptions);
+  absences = new Absences(this.http, this.httpOptions);
+  guards = new Guards(this.http, this.httpOptions, this.user.id);
   
   // times = new Times();
   // subjects = new Subjects();
@@ -270,9 +304,9 @@ export class AbsenciesService {
   private absencies_obs: Observable<Absencia[]> ;
 
   
-  guardies: Guardia[];
+  guardies: Guards;
   private guardiesUrl = BASE_URL+'api/guardies/';
-  private guardies_obs: Observable<Guardia[]>;
+  private guardies_obs: Observable<Guards[]>;
   
   llista_dies: string[] = [];
   llista_hores: string[] = [];
@@ -299,9 +333,8 @@ export class AbsenciesService {
       this.loadDadesMestres();
       this.loadAbsencies();
       this.absences.get();
-      this.loadGuardies();
-      this.guards.getFromAbsence(); // Les meves absències.
-      this.guards.getFromDate(); // Les del dia
+      //this.loadGuardies();
+      this.guards.get(); // Les meves absències.
       this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', this.user.id.toString())
     }
     
@@ -463,7 +496,7 @@ export class AbsenciesService {
     if (tipus == 'espai') {
       url = BASE_URL + 'api/espais';
       cos = JSON.stringify(Array.from(this.espais));
-      console.log ('grups JSON: ', cos, this.espais); 
+      console.log ('espais JSON: ', cos, this.espais); 
       this.http.post<Espai>(url, cos, this.httpOptions)
       .pipe(
         catchError(this.handleError<Espai>('Actualitzar '+tipus))
@@ -472,7 +505,7 @@ export class AbsenciesService {
     if (tipus == 'matèria') {
       url = BASE_URL + 'api/materies/';
       cos = JSON.stringify(Array.from(this.materies));
-      console.log ('grups JSON: ', cos, this.materies); 
+      console.log ('materies JSON: ', cos, this.materies); 
       this.http.post<Materia>(url, cos, this.httpOptions)
       .pipe(
         catchError(this.handleError<Materia>('Actualitzar '+tipus))
@@ -499,13 +532,13 @@ export class AbsenciesService {
     return this.absencies_obs;
   }
 
-  getGuardies(): Observable<Guardia[]> {
-    this.guardies_obs = this.http.get<Guardia[]>(this.guardiesUrl, this.httpOptions)
-      .pipe(
-        catchError((this.handleError<Guardia[]>('getGuardies', [])))
-      );
-    return this.guardies_obs;
-  }
+  // getGuardies(): Observable<Guardia[]> {
+  //   this.guardies_obs = this.http.get<Guardia[]>(this.guardiesUrl, this.httpOptions)
+  //     .pipe(
+  //       catchError((this.handleError<Guardia[]>('getGuardies', [])))
+  //     );
+  //   return this.guardies_obs;
+  // }
 
   updateAbsencia(id: number, objecte: AbsenciaS): Observable<any> {
     console.log('actualitzar absència de: ', objecte["data"] , " amb id ", id);
