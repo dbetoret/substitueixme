@@ -1,0 +1,9 @@
+{
+  "name": "substitueixMe",
+  "integrations": {
+    "capacitor": {
+      "enabled": false
+    }
+  },
+  "type": "angular"
+}

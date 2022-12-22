@@ -1,0 +1,36 @@
+
+<!-- <ul class="absencies">
+  <li *ngFor="let absencia of absencies">
+    <a routerLink="/detail/{{ absencia.id }}">
+      <span class="badge">{{ absencia.id }}</span> {{ absencia.data }}
+    </a>
+  </li>
+</ul> -->
+
+<ion-accordion value="{{ dia.data }}" *ngFor="let dia of data.absences.guardList">
+  <ion-item slot="header" color="secondary">
+    <ion-label>{{ dia.dia_setmana }} {{ dia.data }}</ion-label>
+  </ion-item>
+  <ion-list slot="content">
+    <ion-item detail="true"
+      href="#" *ngFor="let g of dia.guardies">
+      <ion-label slot="start">
+        {{g.hora}} {{g.grup}} {{g.materia}} 
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-accordion>
+
+<!-- <ion-accordion value="{{ dia.data }}" *ngFor="let dia of guardies; index as i">
+  <ion-item slot="header" color="secondary">
+    <ion-label>{{ dia[0].dia_setmana}} {{ dia.data }}</ion-label>
+  </ion-item>
+  <ion-list slot="content">
+    <ion-item detail="true"
+      href="#" *ngFor="let guardia of dia[i]">
+      <ion-label slot="start">
+        {{guardia.hora}} {{guardia.grup}} {{guardia.materia}} 
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-accordion> -->

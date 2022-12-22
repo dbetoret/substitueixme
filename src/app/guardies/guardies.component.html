@@ -1,0 +1,32 @@
+<p>
+  guardies works!
+</p>
+
+
+<!-- <ul class="absencies">
+  <li *ngFor="let absencia of absencies">
+    <a routerLink="/detail/{{ absencia.id }}">
+      <span class="badge">{{ absencia.id }}</span> {{ absencia.data }}
+    </a>
+  </li>
+</ul> -->
+
+<!-- <ion-card *ngFor="let guardia of guardies">
+  <span class="badge"> {{ guardia.data }} </span>
+  <span class="badge"> {{ guardia.hora }} </span>
+  <span class="badge"> {{ guardia.professor }} </span>
+</ion-card> -->
+
+<ion-col size="8" offset="2" class="ion-text-left" *ngFor="let guard of data.guards.guardList"> 
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>{{guard.grup}}</ion-card-title>
+      <ion-card-subtitle>{{guard.espai}}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <p>Materia: {{guard.materia}}</p>
+      <p>Professor: {{guard.professor}}</p>
+      <p>Feina a fer: {{guard.feina}}</p>
+    </ion-card-content>
+  </ion-card>
+</ion-col>

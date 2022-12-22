@@ -1,0 +1,95 @@
+
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-button (click)="modal_cancel()">Cancel·la</ion-button>
+        </ion-buttons>
+        <ion-title>Afegir</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="modal_confirm()" [strong]="true">Acceptar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+
+    <ion-content [fullscreen]="true" class="component-content">
+      <ion-item>
+        <ion-label position="stacked">El teu nom</ion-label>
+        <ion-input id="nom_field" type="text"
+          [(ngModel)]="nom"
+          (ionChange)="print_nom($event, data)"
+          ></ion-input>
+      </ion-item>
+      <ion-list [inset]="true">
+        <ion-item>
+          <ion-toggle slot="start"></ion-toggle>
+          <ion-label>Absència de dia complet</ion-label>
+        </ion-item>
+      </ion-list>
+      <ion-list [inset]="true">
+        <ion-accordion-group value="completa">
+          <!-- <ion-item>
+            <ion-label>Del</ion-label> 
+            <ion-input placeholder="DD/MM/YYYY"
+            ></ion-input>
+            <ion-label>al</ion-label>
+            <ion-input placeholder="DD/MM/YYYY"
+            ></ion-input>
+          </ion-item> -->
+          <ion-accordion value="start">
+          <ion-item slot="header">
+            <ion-label>Comença</ion-label>
+            <ion-label slot="end"> 21-11-2022 </ion-label>
+            <ion-note slot="end"> {{ startDate }} </ion-note>
+          </ion-item>
+          <ion-datetime
+            #startDatetime
+            presentation="date"
+            slot="content"
+            (onIonChange)="startDate = formatDate(startDatetime.value)"
+          ></ion-datetime>
+        </ion-accordion>
+        <ion-accordion value="end">
+          <ion-item slot="header">
+            <ion-label>Acaba</ion-label>
+            <ion-label slot="end"> 23-11-2022 </ion-label>
+            <ion-note slot="end"> {{ endDate }} </ion-note>
+          </ion-item>
+          <ion-datetime
+            #endDatetime
+            presentation="date"
+            slot="content"
+            (onIonChange)="endDate = formatDate(endDatetime.value)"
+          ></ion-datetime>
+        </ion-accordion>
+        </ion-accordion-group>
+            <ion-item slot="header" [hidden]="true">
+              <ion-label>Dia de l'absència</ion-label>
+              <ion-note slot="end"> {{ absDate }} </ion-note>
+            </ion-item>
+            <ion-datetime [hidden]="true"
+              #absDatetime
+              presentation="date"
+              slot="content"
+              (onIonChange)="absDate = formatDate (absDatetime.value)"
+            ></ion-datetime>
+            <ion-label  [hidden]="true"
+              slot="content">Hora d'inici</ion-label>
+            <ion-datetime  [hidden]="true"
+              slot="content" presentation="time"></ion-datetime>
+            <ion-label  [hidden]="true"
+              slot="content">Hora d'acabament</ion-label>
+            <ion-datetime  [hidden]="true"
+              slot="content" presentation="time"></ion-datetime>
+      </ion-list>
+    </ion-content>
+    <ion-grid slot="content"> 
+      <ion-row>
+        <ion-col>
+          <ion-datetime slot="start" presentation="time"></ion-datetime>
+        </ion-col>
+        <ion-col>
+          <ion-datetime slot="end" presentation="time"></ion-datetime>
+        </ion-col>
+      </ion-row>
+    </ion-grid> 

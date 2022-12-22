@@ -1,0 +1,176 @@
+
+  <ion-header [translucent]="true"> 
+    <ion-toolbar>
+      <ion-title>
+        Configuració
+      </ion-title>
+      <ion-item button (click)="changeUser()"> 
+        <ion-icon 
+          icon="person-circle-outline"
+          slot="end"
+          size="large"
+        ></ion-icon>
+      </ion-item>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content>
+    <!-- HORARI -->
+    <h1>Horari</h1>
+
+<!-- <horari></horari> -->
+<ion-grid>
+  <ion-row>
+    <ion-col><div class="grid-col-div"></div></ion-col>
+    <ion-col *ngFor="let d of aS.llista_dies">
+      <div class="grid-col-div">{{ d }}</div>
+    </ion-col>
+  </ion-row>
+  <ion-row *ngFor="let h of aS.llista_hores">
+    <ion-col>
+      <div class="grid-col-div">{{ h }}</div>
+    </ion-col>
+    <ion-col *ngFor="let d of aS.llista_dies">
+      <div class="casella{{ aS.llista_horesdies.get(h).get(d) }}" class="grid-col-div"
+      [innerHTML]="aS.t3_horari.get(aS.llista_horesdies.get(h).get(d).toString())"
+      >
+    </div>
+    </ion-col> 
+  </ion-row>
+</ion-grid>
+
+   
+
+<ion-modal [isOpen]="mhIsOpen" [canDismiss]="canDismiss">
+  <ng-template>
+
+    <ion-content [fullscreen]="false" class="component-content">
+        <ion-list>
+          <ion-row>
+            <ion-col>
+              <ion-button fill="outline"
+              (click)="mhIsOpen = false;"
+              >Cancel·la</ion-button>
+            </ion-col>
+            <ion-col>
+              <ion-button (click)="acceptModal()">Accepta</ion-button>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col>
+              <ion-item >
+                <ion-select 
+                  interface="popover" placeholder="Dia"
+                  [(ngModel)]="mhDia" 
+                  (ionChange)="mhOnChangeHoraDia()" 
+                  >
+                  <ion-select-option  
+                  *ngFor="let item of aS.llista_dies;"
+                  >{{ item }} </ion-select-option>
+                </ion-select > 
+              </ion-item>
+            </ion-col>
+            <ion-col>
+              <ion-item> 
+                <ion-select 
+                interface="popover" placeholder="Hora"
+                [(ngModel)]="mhHora"
+                (ionChange)="mhOnChangeHoraDia();"
+                >
+                  <ion-select-option 
+                  *ngFor="let item of aS.llista_hores;"
+                  >{{ item }}</ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col>
+              <ion-item>
+                <ion-label>Matèria</ion-label>
+                <ion-select interface="popover"
+                [(ngModel)]="mhMateria"
+                [disabled]="mhIsGuardia">
+                  <ion-select-option 
+                  *ngFor="let item of aS.materies | keyvalue"
+                  value="{{ item.key }}"
+                  > {{ item.value }} </ion-select-option>
+                </ion-select>
+              </ion-item>
+              <ion-item>
+                <ion-label>Grup</ion-label>
+                <ion-select interface="popover"
+                [(ngModel)]="mhGrup"
+                [disabled]="mhIsGuardia">
+                  <ion-select-option 
+                  *ngFor="let item of aS.grups | keyvalue"
+                  value="{{ item.key }}"
+                  > {{ item.value }} </ion-select-option>
+                </ion-select>
+              </ion-item>
+            <ion-item>
+              <ion-label>Espai</ion-label>
+              <ion-select interface="popover"
+              [(ngModel)]="mhEspai"
+              [disabled]="mhIsGuardia">
+                <ion-select-option 
+                *ngFor="let item of aS.espais | keyvalue"
+                value="{{ item.key }}"
+                > {{ item.value }} </ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item>
+              <ion-label>És guàrdia?</ion-label>
+              <ion-toggle slot="start" 
+                [(ngModel)]="mhIsGuardia"
+                (ionChange)="mhCanviaGuardia()"
+                ></ion-toggle>
+            </ion-item>
+          </ion-col></ion-row>
+          <ion-row><ion-col>
+            <ion-button color="danger">Eliminar</ion-button>
+          </ion-col></ion-row>
+        </ion-list>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<ion-modal [isOpen]="mgIsOpen" [canDismiss]="canDismiss" (willDismiss)="onWillDismiss($event, 'grup')">
+  <ng-template>
+    <ion-content>
+      <ion-list *ngFor="let grup of aS.grups | keyvalue">
+        <ion-item (click)="mCreaModificaNom('Modifica', 'grup', grup.value, grup.key)"> {{ grup.value }}</ion-item>
+      </ion-list>
+      <ion-button (click)="mCreaModificaNom('Afig', 'grup', '', -1)">Afig un nou grup</ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<ion-modal [isOpen]="meIsOpen" [canDismiss]="canDismiss" (willDismiss)="onWillDismiss($event, 'espai')">
+  <ng-template>
+    <ion-content>
+      <ion-list *ngFor="let espai of aS.espais | keyvalue">
+        <ion-item (click)="mCreaModificaNom('Modifica', 'espai', espai.value, espai.key)"> {{ espai.value }}</ion-item>
+      </ion-list>
+      <ion-button (click)="mCreaModificaNom('Afig', 'espai', '', -1)">Afig un nou espai</ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<ion-modal [isOpen]="mmIsOpen" [canDismiss]="canDismiss" (willDismiss)="onWillDismiss($event, 'matèria')">
+  <ng-template>
+    <ion-content>
+      <ion-list *ngFor="let mat of aS.materies | keyvalue">
+        <ion-item (click)="mCreaModificaNom('Modifica', 'matèria', mat.value, mat.key)"> {{ mat.value }}</ion-item>
+      </ion-list>
+      <ion-button (click)="mCreaModificaNom('Afig','matèria', '', -1)">Afig una nova matèria</ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+    <ion-fab slot="fixed" horizontal="end" vertical="bottom" size="large">
+      <ion-fab-button size="large" (click)="menuConfiguracio()">
+        <ion-icon name="menu-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab> 
+    <!-- <app-explore-container name="Tab 3 page"></app-explore-container> -->
+</ion-content>
