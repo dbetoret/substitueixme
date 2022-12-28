@@ -11,6 +11,7 @@ import { HttpOptions } from '@capacitor/core';
 
 // export const USER = new HttpContextToken<string>(() => '');
 export const BASE_URL = 'http://localhost:8000/absencies/';
+// export const BASE_URL = 'https://substitueixme.herokuapp.com/absencies/'
 
 class Dates {
   date2str(valor: Date = new Date()): string {
@@ -143,19 +144,25 @@ class Absences {
 class Guards {
   // Les guàrdies que deixe cada dia,
   // per muntar la llista diària de absències.
-  AbsenceGuards: Map<string, {
-    data: string,
-    dia_setmana: string,
-    guardies: Guard[] 
-  }>;
+  // AbsenceGuards: Map<string, {
+  //   data: string,
+  //   dia_setmana: string,
+  //   guardies: Guard[] 
+  // }> = new Map();
+  absenceGuards: {
+    [key: string]: Guard[]
+  } = {}
 
   // Guàrdies que em toca fer un determinat dia,
   // avui o quan sigui.
-  DailyGuards: Map<string, {
-    data: string,
-    dia_setmana: string,
-    guardies: Guard[]
-  }>;
+  // DailyGuards: Map<string, {
+  //   data: string,
+  //   dia_setmana: string,
+  //   guardies: Guard[]
+  // }> = new Map();
+  dailyGuards: {
+    [key: string]: Guard[]
+  } = {}
   
   private guardsUrl: string = BASE_URL+'api/guardies/';
   private dates: Dates = new Dates();
@@ -188,7 +195,7 @@ class Guards {
       })
     )
     .subscribe(data => {
-      console.log('absencies rebudes: ', data);
+      console.log('guàrdies rebudes: ', data);
       for (var i in data){
         // preparem la info:
         date = this.dates.str2date(data[i].data);
@@ -214,21 +221,21 @@ class Guards {
           substitut: data[i].substitut,
           feina: data[i].feina 
         }
-        if (guard.id_professor=this.user_id){
-          this.AbsenceGuards.set(data[i].data, {
-            data: data[i].data, 
-            dia_setmana: dia_setmana, 
-            guardies: []
-          })
+        console.log ('tenim nova guard: ', guard, ' amb el guard_profe ', guard.id_professor, ' i el selfprofe ', this.user_id);
+        if (guard.id_professor==this.user_id){
+          if (!(data[i].data in this.absenceGuards)){
+            this.absenceGuards[data[i].data]=[]
+          }
+          this.absenceGuards[data[i].data].push(guard)
         }
         else {
-          this.DailyGuards.set(data[i].data, {
-            data: data[i].data, 
-            dia_setmana: dia_setmana, 
-            guardies: []
-          })
+          if (!(data[i].data in this.dailyGuards)){
+            this.dailyGuards[data[i].data] =  []
+          }
+          this.dailyGuards[data[i].data].push(guard)
         }
       }
+      console.log ('la carrega de absenceguards és: ', this.absenceGuards, ' i de Daily ', this.dailyGuards);
     })
   }
 }
@@ -243,7 +250,9 @@ class User {
   constructor(
     private http: HttpClient ,
     private httpOptions: {headers: HttpHeaders, params: HttpParams}
-  ) {}
+  ) {
+    this.id = 2;
+  }
 
   select(name: string){
     if (name != this.name){

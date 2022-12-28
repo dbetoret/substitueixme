@@ -35,13 +35,13 @@ import { Guard, Absence } from '../model/interfaces';
   styleUrls: ['./absencies.component.scss'],
 })
 export class AbsenciesComponent implements OnInit {
-  absences: Absence[] = [];
+  // absences: Absence[] = [];
   // absenciesS: AbsenciaS[] = [];
-  guards: Map<string, {
-                    data: string,
-                    dia_setmana: string,
-                    guardies: Guard[]
-                }> = new Map;
+  // guards: Map<string, {
+  //                   data: string,
+  //                   dia_setmana: string,
+  //                   guardies: Guard[]
+  //               }> = new Map;
   // data;
   // data_fi;
   // hora_ini;
@@ -52,12 +52,15 @@ export class AbsenciesComponent implements OnInit {
 
   //horari
 
-  constructor(private data: AbsenciesService) { }
+  constructor(private data: AbsenciesService) { 
+    this.data.absences.get();
+    this.data.guards.get();
+    // this.guards = this.data.guards.AbsenceGuards; 
+    console.log("les guardies en abs.component son: ", this.data.guards.absenceGuards);
+  }
 
   ngOnInit(): void {
-    this.data.absences.get();
-    // this.guards = this.data.guards.AbsenceGuards; 
-    console.log("les guardies en abs.component son: ", this.guards);
+  
   }
 
   // getAbsencies(): Absencia[]{

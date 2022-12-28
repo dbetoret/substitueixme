@@ -7,13 +7,13 @@
   </li>
 </ul> -->
 
-<ion-accordion value="{{ dia.data }}" *ngFor="let dia of data.absences.guardList">
+<ion-accordion value="{{ dia.key }}" *ngFor="let dia of data.guards.absenceGuards | keyvalue">
   <ion-item slot="header" color="secondary">
-    <ion-label>{{ dia.dia_setmana }} {{ dia.data }}</ion-label>
+    <ion-label>{{ dia.key }}</ion-label>
   </ion-item>
   <ion-list slot="content">
     <ion-item detail="true"
-      href="#" *ngFor="let g of dia.guardies">
+      href="#" *ngFor="let g of dia.value">
       <ion-label slot="start">
         {{g.hora}} {{g.grup}} {{g.materia}} 
       </ion-label>

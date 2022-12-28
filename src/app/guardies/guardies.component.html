@@ -1,6 +1,6 @@
-<p>
+<!-- <p>
   guardies works!
-</p>
+</p> -->
 
 
 <!-- <ul class="absencies">
@@ -17,16 +17,16 @@
   <span class="badge"> {{ guardia.professor }} </span>
 </ion-card> -->
 
-<ion-col size="8" offset="2" class="ion-text-left" *ngFor="let guard of data.guards.guardList"> 
-  <ion-card>
+<ion-col size="8" offset="2" class="ion-text-left" *ngFor="let guard of data.guards.dailyGuards | keyvalue"> 
+  <ion-card *ngFor="let g of guard.value">
     <ion-card-header>
-      <ion-card-title>{{guard.grup}}</ion-card-title>
-      <ion-card-subtitle>{{guard.espai}}</ion-card-subtitle>
+      <ion-card-title>{{g.grup}}</ion-card-title>
+      <ion-card-subtitle>{{g.espai}}</ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
-      <p>Materia: {{guard.materia}}</p>
-      <p>Professor: {{guard.professor}}</p>
-      <p>Feina a fer: {{guard.feina}}</p>
+      <p>Materia: {{g.materia}}</p>
+      <p>Professor: {{g.professor}}</p>
+      <p>Feina a fer: {{g.feina}}</p>
     </ion-card-content>
   </ion-card>
 </ion-col>
