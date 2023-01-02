@@ -1,19 +1,19 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpContext, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Absencia, AbsenciaS } from './absencia';
 import { DadesMestres, Franja_horaria, Espai, Grup, Materia, Horari } from './dadesmestres';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, compareAsc } from 'date-fns';
 import { Guard, GuardJSON, Absence, AbsenceJSON } from './model/interfaces';
 import { HttpOptions } from '@capacitor/core';
 
 // export const USER = new HttpContextToken<string>(() => '');
-export const BASE_URL = 'http://localhost:8000/absencies/';
-// export const BASE_URL = 'https://substitueixme.herokuapp.com/absencies/'
+// export const BASE_URL = 'http://localhost:8000/absencies/';
+ export const BASE_URL = 'https://substitueixme.herokuapp.com/absencies/'
 
-class Dates {
+export class Dates {
   date2str(valor: Date = new Date()): string {
     console.log('vaig a convertir ', valor);
     //return format(valor, 'dd-MM-yyyy');
@@ -24,17 +24,28 @@ class Dates {
     console.log('vaig a convertir ', valor);
     return valor.toString();
   }
-  str2date(valor: string): Date {
-    return parseISO(valor);
+  str2date(valor: string, hour: string = '00', minutes: string='00'): Date {
+    return parseISO(valor+'T'+hour+':'+minutes);
   }
   time2str(valor: Date = new Date()): string {
+    if (valor == null){
+      valor = new Date();
+    }
+    console.log('vaig a convertir lhora', valor);
+    return format(valor, 'HH:mm');
     return '';
   }
   str2time(valor: string): Date{
     var d = new Date();
-    var parts = valor.split(':');
-    d.setHours(parseInt(valor[0]));
-    d.setMinutes(parseInt(valor[1]));
+    if (valor == 'None') {
+      d.setHours(0);
+      d.setMinutes(0);
+    } else {
+      var parts = valor.split(':');
+      d.setHours(parseInt(valor[0]));
+      d.setMinutes(parseInt(valor[1]));
+      console.log('he convertit el temps ', valor, ' en ', d);
+    }
     return d;
   }
   str2str(valor: string): string{
@@ -51,6 +62,7 @@ class Absences {
   guardList: Guard[] = [];
   private absencesUrl = BASE_URL+'api/absencies/';
   dates: Dates = new Dates();
+  isAbsentIndex: Number = -1;
 
   constructor(
     private http: HttpClient,
@@ -69,17 +81,27 @@ class Absences {
       console.log('carrega absencies: ', data);
       // console.log(data)
       this.list = [];
+      var a: Absence;
+      var b: Date;
       for (var i=0;i<data.length; i++){
-        this.list.push ({
+        a = {
           id: data[i].id,
           data: this.dates.str2date(data[i].data),
-          data_fi: this.dates.str2date(data[i].data_fi),
+          data_fi: this.dates.str2date(data[i].data_fi, '23', '59'),
           hora_ini: this.dates.str2time(data[i].hora_ini),
           hora_fi: this.dates.str2time(data[i].hora_fi),
           dia_complet: data[i].dia_complet,
           extraescolar: data[i].extraescolar,
           justificada: data[i].justificada
-        })    
+        };
+        b = new Date();
+        console.log('Comprovem si', b, ' entre ', a.data.toString(), ' i ', a.data_fi.toString());
+        if (compareAsc(a.data, b) != 1 && compareAsc(a.data_fi, b) != -1){
+          console.log('En carregar està absent, entre ', a.data.toString(), ' i ', a.data_fi.toString());
+          this.isAbsentIndex = this.list.push(a) -1;
+        } else {
+          this.list.push (a);
+        }    
       }
       // La diferència entre **absències** i **guàrdies** és que 
       // una **absència** és multi-dia, i volem editar-la en bloc.
@@ -123,7 +145,28 @@ class Absences {
 
   push(){}
 
-  insert(){}
+  insert(ab: AbsenceJSON){
+    var a: Absence;
+    var b: Date;
+    a = {
+      id: ab.id,
+      data: this.dates.str2date(ab.data),
+      data_fi: this.dates.str2date(ab.data_fi),
+      hora_ini: this.dates.str2time(ab.hora_ini),
+      hora_fi: this.dates.str2time(ab.hora_fi),
+      dia_complet: ab.dia_complet,
+      extraescolar: ab.extraescolar,
+      justificada: ab.justificada
+    };
+    b = new Date();
+    if (compareAsc(a.data, b) != 1 && compareAsc(a.data_fi, b) != -1){
+      console.log('En insertar està absent, entre ', a.data.toString(), ' i ', a.data_fi.toString());
+      this.isAbsentIndex = this.list.push(a) -1;
+    } else {
+      this.list.push (a);
+    }
+    this.update(ab);
+  }
 
   update(objecte: AbsenceJSON) {
     // rep una AbsenceJSON, amb les dates en format cadena.
@@ -246,12 +289,16 @@ class User {
   centre_id: number;
   centre_name: string;
   auth_token: string;
+  is_logged_in: boolean;
+  private usersURL: string = BASE_URL+'api/user/';
+  private loginURL: string = BASE_URL+'api/login/';
+  private logoutURL: string = BASE_URL+'api/logout/';
   
   constructor(
     private http: HttpClient ,
     private httpOptions: {headers: HttpHeaders, params: HttpParams}
   ) {
-    this.id = 2;
+    this.is_logged_in = !(localStorage.getItem('username') === null);
   }
 
   select(name: string){
@@ -261,11 +308,63 @@ class User {
       else this.id = 2;
     }
     // this.httpOptions["params"] = this.httpOptions["params"].set('user', this.name);
-    this.httpOptions["headers"] = this.httpOptions["headers"].set('Authorization', this.id.toString())
+    //this.httpOptions["headers"] = this.httpOptions["headers"].set('Authorization', this.id.toString())
     return true;
   }
 
-  logged_in () {return true;}
+  create(name: string, pass: string){
+    console.log('vaig a insertar usuari ', name);
+    this.http.post(this.usersURL, {
+          'user':     name, 
+          'password': pass,
+          'email':    '',
+        }, this.httpOptions)
+      .subscribe();
+  }
+
+  login(name: string, pass: string, callback: any){
+    console.log("a fer el login per a ", name, ' amb la ', pass);
+    this.http.post(this.loginURL, {
+          'user':     name,
+          'password': pass,
+        }, this.httpOptions)
+      .pipe(catchError(caugth => this.handleError(caugth, callback)))
+      .subscribe(data => {
+        localStorage.setItem('username', name);
+        this.is_logged_in = true;
+        callback(true);
+        console.log('el resultado del login es: ',data);
+      });
+  }
+
+  logout(callback: any){
+    this.http.post(
+      this.logoutURL, 
+      {}, 
+      {
+        'headers': this.httpOptions.headers, //.set('responseType', 'text'), 
+        'params': this.httpOptions.params
+      }
+    )
+    .pipe(catchError(caugth => this.handleError(caugth, callback)))
+    .subscribe(data => {
+      localStorage.clear();
+      this.is_logged_in = false;
+      callback(true);
+    })
+  }
+
+  logged_in () {
+    return (!(localStorage.getItem('username') === null)) ;
+  }
+
+  private handleError (error: HttpErrorResponse, callback){
+    localStorage.removeItem('username');
+    console.log(error.message);
+    this.is_logged_in = false;
+    callback(false);
+    return throwError(() => new Error('Error al fer login'));
+  }
 }
 
 @Injectable({
@@ -279,8 +378,9 @@ export class AbsenciesService {
   private username = '';
 
   httpOptions = {
-    headers: new HttpHeaders({ 'Content-Type': 'application/json', 'credentials': 'include', Authorization: '1' }),
-    params: new HttpParams()
+    headers: new HttpHeaders({ 'Content-Type': 'application/json', 'credentials': 'include' }),
+    params: new HttpParams(),
+    withCredentials: true,
   };
 
 
@@ -329,6 +429,11 @@ export class AbsenciesService {
     private http: HttpClient) 
   { 
     this.llista_horesdies = new Map<string, Map<string,number>>();
+    if (this.user.is_logged_in){
+      this.loadDadesMestres();
+      this.absences.get();
+      this.guards.get();
+    }
   }
 
   select_user(data) {
@@ -344,20 +449,13 @@ export class AbsenciesService {
       this.absences.get();
       //this.loadGuardies();
       this.guards.get(); // Les meves absències.
-      this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', this.user.id.toString())
+      //this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', this.user.id.toString())
     }
     
   }
 
   userLogged() {
-    if (this.username == ''){
-      this.username = 'david';
-      //this.httpOptions["context"] = new HttpContext().set(user, this.username);
-      this.loadDadesMestres();
-      this.loadAbsencies();
-      this.loadGuardies();
-    }
-    return true;
+    return (!(localStorage.getItem('username') === null)) ;
   }
 
   creaUsuari(usuari: string, contrasenya: string): boolean {

@@ -5,7 +5,7 @@ import { OverlayEventDetail } from '@ionic/core/components';
 import { format, parseISO } from 'date-fns';
 
 import { Absencia, AbsenciaS } from '../absencia';
-import { AbsenciesService } from '../absencies.service';
+import { AbsenciesService, Dates } from '../absencies.service';
 import { Absence, AbsenceJSON } from '../model/interfaces'
 
 
@@ -23,14 +23,14 @@ export class Tab1Page {
   absencia_actual_id: number;
   absencia: Absencia;
   absenciaS: AbsenciaS;
+  date: Dates = new Dates();
 
   // variables de interfície modal
   @ViewChild(IonModal) modal: IonModal;
   canDismiss = true;
   isModalOpen = false;
   isLoginModalOpen = false;
-  isRememberModalOpen = false;
-  isCreateModalOpen = false;
+  modalType: string = 'login';
   isTaskModalOpen = false;
 
   // variables de dades de modal
@@ -59,7 +59,7 @@ export class Tab1Page {
     private alertCtrl: AlertController,
     private modalCtrl: ModalController
   ) {
-    if (! this.absenciesService.userLogged()){
+    if (! this.absenciesService.user.is_logged_in){
       this.isLoginModalOpen = true;
       this.canDismiss = false;
     }
@@ -94,44 +94,71 @@ processaAbsencies(absencies): void {
   }
 }
 
+
+substitueixme(): void {
+  var absencia_nova: AbsenceJSON = {
+    id: -1,
+    data: this.date.date2str(),
+    data_fi:  this.date.date2str(),
+    dia_complet: true,
+    hora_ini: this.date.time2str(),
+    hora_fi: '23:59',
+    extraescolar: false,
+    justificada: false,
+  }
+  console.log("al tancar modal, amb id: ", absencia_nova.id);
+  this.absenciesService.absences.insert(absencia_nova);
+}
+
 // ###############################
 // Funcions del Login
 // ###############################
 
 showLogin(){
   this.canDismiss = true;
-  this.isRememberModalOpen = false;
-  this.isCreateModalOpen = false;
   this.isLoginModalOpen = true;
-  console.log("vull fer login");
+  this.modalType = 'login';
 }
 
 showRecordar(){
   this.canDismiss = true;
-  this.isLoginModalOpen = false;
-  this.isCreateModalOpen = false;
-  this.isRememberModalOpen = true;
+  this.isLoginModalOpen = true;
+  this.modalType = 'remember';
 }
 
 showCrear(){
   this.canDismiss = true;
-  this.isLoginModalOpen = false;
-  this.isRememberModalOpen = false;
-  this.isCreateModalOpen = true;
-  //console.log("vull mostrar crear");
+  this.isLoginModalOpen = true;
+  this.modalType = 'create';
 }
 
 recordaContrasenya(){
 
 }
 
-creaUsuari(){
-  this.absenciesService.creaUsuari(this.usuari, this.contrasenya);
+createUser(){
+  this.absenciesService.user.create(this.usuari, this.contrasenya);
   this.isLoginModalOpen = false;
 }
 
 doLogin(){
-  this.isLoginModalOpen = false;
+  this.absenciesService.user.login(this.usuari, this.contrasenya, this.callbackLogin.bind(this));
+}
+
+doLogout(){
+  this.absenciesService.user.logout(this.callbackLogout.bind(this));
+}
+
+callbackLogin(success: boolean){
+  // funció de callback per a les accions necessàries quan es
+  // confirme o rebutge la petició de login.
+  this.canDismiss = success;
+  this.isLoginModalOpen = !success;
+  this.absenciesService.loadDadesMestres();
+}
+
+callbackLogout(success: boolean){
+  this.callbackLogin(!success);
 }
 
 
@@ -197,7 +224,7 @@ doLogin(){
   async openModal(absindex: number) {
     this.abs_index = absindex;
     var ASA = this.absenciesService.absences.list;
-    console.log('asa es: ',ASA);
+    console.log('asa es: ',ASA, ' i vaig a carregar el index ', absindex);
     if (absindex >= 0) {
       this.absencia_id = ASA[absindex].id;
       this.data_inici = this.absenciesService.absences.dates.date2str(ASA[absindex].data);

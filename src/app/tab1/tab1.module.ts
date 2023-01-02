@@ -21,7 +21,7 @@ import { AbsenciesComponent } from '../absencies/absencies.component';
   ],
   declarations: [
     Tab1Page,
-    AbsenciesComponent
+    AbsenciesComponent,
   ]
 })
 export class Tab1PageModule {}

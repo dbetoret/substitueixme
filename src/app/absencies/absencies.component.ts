@@ -52,9 +52,9 @@ export class AbsenciesComponent implements OnInit {
 
   //horari
 
-  constructor(private data: AbsenciesService) { 
-    this.data.absences.get();
-    this.data.guards.get();
+  constructor(private data: AbsenciesService) {  
+    // this.data.absences.get();
+    // this.data.guards.get();
     // this.guards = this.data.guards.AbsenceGuards; 
     console.log("les guardies en abs.component son: ", this.data.guards.absenceGuards);
   }

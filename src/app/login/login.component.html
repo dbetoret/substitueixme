@@ -1,0 +1,115 @@
+    <!-- ################-->
+    <!-- INICI DE SESSIÓ -->
+    <!-- ################-->
+    <ion-modal [isOpen]="isLoginModalOpen" [canDismiss]="canDismiss"
+    trigger="login" (willDismiss)="onLogin($event)">
+    <ng-template>
+      <ion-content [fullscreen]="false" class="component-content">
+        <ion-card>
+          <ion-row>        
+            <ion-col size-md="3" size="12" class="ion-padding ion-blue-bkg">          
+              <img alt="Ionic logo" loading="lazy"
+              src=""            
+              />        
+            </ion-col>        
+            <ion-col size-md="9" size="12" class="welcome">          
+              <ion-card-header>            
+                <ion-card-title> Inicia la sessió </ion-card-title>          
+              </ion-card-header>
+              <ion-card-content> 
+                <ion-item-group>
+                <ion-item>
+                  <ion-label>Usuari</ion-label>
+                  <ion-input type="text" [(ngModel)]="usuari" placeholder="Adreça de correu"></ion-input>
+                </ion-item>
+                <ion-item>
+                  <ion-label>Contrasenya</ion-label>
+                  <ion-input type="password" [(ngModel)]="contrasenya" ></ion-input>
+                </ion-item> 
+                <ion-text 
+                  (click)="recordaContrasenya()">
+                  <a href="#" (click)="recordaContrasenya()"
+                  >Recordar contrasenya</a>
+                </ion-text> 
+              </ion-item-group> 
+              </ion-card-content>  
+              <ion-item lines="none">
+                <ion-button (click)="showCrear()" 
+                color="primary"  slot="start" fill="outline"
+                size="medium"
+              > Crear usuari </ion-button>         
+              <ion-button (click)="doLogin()" 
+                color="primary"  slot="end"
+                size="medium"
+              > Entrar </ion-button>
+              </ion-item>      
+            </ion-col>      
+          </ion-row>  
+ 
+        </ion-card>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+<ion-modal [isOpen]="isRememberModalOpen"
+    trigger="login" (willDismiss)="onLogin($event)">
+    <ng-template>
+      <ion-content [fullscreen]="false" class="component-content">
+        <ion-card hidden="true">  <!-- RECORDAR CARD -->
+        </ion-card>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+
+<ion-modal [isOpen]="isCreateModalOpen" [canDismiss]="canDismiss" >
+  <ng-template>
+    <ion-content [fullscreen]="false" class="component-content">
+        <ion-card>  <!-- CREAR CARD -->
+          <ion-row>        
+            <ion-col size-md="3" size="12" class="ion-padding ion-blue-bkg">          
+              <img alt="Ionic logo" loading="lazy"
+              src=""            
+              />        
+            </ion-col>        
+            <ion-col size-md="9" size="12" class="welcome">          
+              <ion-card-header>            
+                <ion-card-title> Creació del compte d'usuari </ion-card-title>          
+              </ion-card-header>
+              <ion-card-content> 
+                <ion-item-group>
+                <ion-item>
+                  <ion-label>Adreça de correu</ion-label>
+                  <ion-input type="text" [(ngModel)]="usuari"></ion-input>
+                </ion-item>
+                <ion-item>
+                  <ion-label>Contrasenya</ion-label>
+                  <ion-input type="password" [(ngModel)]="contrasenya"></ion-input>
+                </ion-item> 
+                <ion-item>
+                  <ion-label>Contrasenya</ion-label>
+                  <ion-input type="password" placeholder="Torna a introduir la contrasenya"></ion-input>
+                </ion-item> 
+              </ion-item-group> 
+              </ion-card-content>  
+              <ion-item lines="none">
+                <ion-button (click)="showLogin()" 
+                color="primary"  slot="start" fill="outline"
+                size="medium"
+              > Login </ion-button>         
+              <ion-button (click)="createUser()" 
+                color="primary"  slot="end"
+                size="medium"
+              > Crear usuari </ion-button>
+              </ion-item>  
+            </ion-col>      
+          </ion-row>  
+          <ion-row>
+            <ion-col>
+            </ion-col>
+          </ion-row>  
+        </ion-card>
+
+    </ion-content>
+  </ng-template>
+</ion-modal>
