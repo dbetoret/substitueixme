@@ -10,8 +10,8 @@ import { Guard, GuardJSON, Absence, AbsenceJSON } from './model/interfaces';
 import { HttpOptions } from '@capacitor/core';
 
 // export const USER = new HttpContextToken<string>(() => '');
-// export const BASE_URL = 'http://localhost:8000/absencies/';
- export const BASE_URL = 'https://substitueixme.herokuapp.com/absencies/'
+//export const BASE_URL = 'http://localhost:8000/absencies/';
+export const BASE_URL = 'https://substitueixme.herokuapp.com/absencies/'
 
 export class Dates {
   date2str(valor: Date = new Date()): string {
@@ -206,14 +206,17 @@ class Guards {
   dailyGuards: {
     [key: string]: Guard[]
   } = {}
+
+  // El user_id s'ha d'establir després de fer login.
+  // De manera ideal, l'establim amb el get() que fa el servei
+  // a l'inici, com a callback del login.
   
   private guardsUrl: string = BASE_URL+'api/guardies/';
   private dates: Dates = new Dates();
 
   constructor(
     private http: HttpClient,
-    private httpOptions: {headers: HttpHeaders, params: HttpParams},
-    private user_id: number
+    private httpOptions: {headers: HttpHeaders, params: HttpParams}
   ) {}
 
   data: string; 
@@ -230,6 +233,7 @@ class Guards {
     var parts: string[];
     var dia_setmana: string;
     var guard: Guard;
+    var user_id: string = localStorage.getItem('user_id');
     this.http.get<GuardJSON[]>(this.guardsUrl, this.httpOptions)
     .pipe(
       catchError((err) => {
@@ -264,8 +268,8 @@ class Guards {
           substitut: data[i].substitut,
           feina: data[i].feina 
         }
-        console.log ('tenim nova guard: ', guard, ' amb el guard_profe ', guard.id_professor, ' i el selfprofe ', this.user_id);
-        if (guard.id_professor==this.user_id){
+        console.log ('tenim nova guard: ', guard, ' amb el guard_profe ', guard.id_professor, ' i el selfprofe ', user_id);
+        if (guard.id_professor.toString()==user_id){
           if (!(data[i].data in this.absenceGuards)){
             this.absenceGuards[data[i].data]=[]
           }
@@ -299,6 +303,8 @@ class User {
     private httpOptions: {headers: HttpHeaders, params: HttpParams}
   ) {
     this.is_logged_in = !(localStorage.getItem('username') === null);
+    console.log(' el usuari ', localStorage.getItem('username'), ' esta a la creació de la classe');
+    //this.httpOptions["observe"] = 'response'
   }
 
   select(name: string){
@@ -312,28 +318,51 @@ class User {
     return true;
   }
 
-  create(name: string, pass: string){
+  create(name: string, pass: string, callback: any){
     console.log('vaig a insertar usuari ', name);
     this.http.post(this.usersURL, {
           'user':     name, 
           'password': pass,
           'email':    '',
-        }, this.httpOptions)
-      .subscribe();
+        }, {
+          headers: this.httpOptions.headers,
+          params: this.httpOptions.params,
+          observe: 'response'
+        })
+      .pipe(catchError(caugth => this.handleError(caugth, callback)))
+      .subscribe(response => {
+        localStorage.setItem('user_id', response.body['user_id']);
+        localStorage.setItem('username', response.body['username']);
+        localStorage.setItem('Authorization', response.headers.get('Authorization'));
+        this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', response.headers.get('Authorization'))
+        this.is_logged_in = true;
+        callback(true);
+      });
   }
 
   login(name: string, pass: string, callback: any){
     console.log("a fer el login per a ", name, ' amb la ', pass);
-    this.http.post(this.loginURL, {
+    this.http.post<any>(this.loginURL, {
           'user':     name,
           'password': pass,
-        }, this.httpOptions)
+        }, {
+          headers: this.httpOptions.headers,
+          params: this.httpOptions.params,
+          observe: 'response'
+        })
       .pipe(catchError(caugth => this.handleError(caugth, callback)))
-      .subscribe(data => {
-        localStorage.setItem('username', name);
+      .subscribe(response => {
+        console.log('response body ', response.body);
+        let b = response.body['user_id'];
+        console.log('el id es ', b);
+        localStorage.setItem('user_id', response.body['user_id']);
+        localStorage.setItem('username', response.body['username']);
+        localStorage.setItem('Authorization', response.headers.get('Authorization'));
+        this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', response.headers.get('Authorization'))
+
         this.is_logged_in = true;
         callback(true);
-        console.log('el resultado del login es: ',data);
+        console.log('el resultado del login es: ',response);
       });
   }
 
@@ -386,7 +415,7 @@ export class AbsenciesService {
 
   user = new User(this.http, this.httpOptions);
   absences = new Absences(this.http, this.httpOptions);
-  guards = new Guards(this.http, this.httpOptions, this.user.id);
+  guards = new Guards(this.http, this.httpOptions);
   
   // times = new Times();
   // subjects = new Subjects();
@@ -430,6 +459,7 @@ export class AbsenciesService {
   { 
     this.llista_horesdies = new Map<string, Map<string,number>>();
     if (this.user.is_logged_in){
+      this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', localStorage.getItem('Authorization'))
       this.loadDadesMestres();
       this.absences.get();
       this.guards.get();
@@ -601,7 +631,7 @@ export class AbsenciesService {
       ).subscribe();
     }
     if (tipus == 'espai') {
-      url = BASE_URL + 'api/espais';
+      url = BASE_URL + 'api/espais/';
       cos = JSON.stringify(Array.from(this.espais));
       console.log ('espais JSON: ', cos, this.espais); 
       this.http.post<Espai>(url, cos, this.httpOptions)

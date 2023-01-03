@@ -137,7 +137,7 @@ recordaContrasenya(){
 }
 
 createUser(){
-  this.absenciesService.user.create(this.usuari, this.contrasenya);
+  this.absenciesService.user.create(this.usuari, this.contrasenya, this.callbackLogin.bind(this));
   this.isLoginModalOpen = false;
 }
 
