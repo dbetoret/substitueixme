@@ -55,11 +55,11 @@ export class Tab1Page {
 
   constructor(
     private actionSheetController: ActionSheetController, 
-    private absenciesService: AbsenciesService,
+    private AS: AbsenciesService,
     private alertCtrl: AlertController,
     private modalCtrl: ModalController
   ) {
-    if (! this.absenciesService.user.is_logged_in){
+    if (this.AS.user.is_logged_in == -1){
       this.isLoginModalOpen = true;
       this.canDismiss = false;
     }
@@ -107,7 +107,7 @@ substitueixme(): void {
     justificada: false,
   }
   console.log("al tancar modal, amb id: ", absencia_nova.id);
-  this.absenciesService.absences.insert(absencia_nova);
+  this.AS.absences.insert(absencia_nova);
 }
 
 // ###############################
@@ -137,24 +137,27 @@ recordaContrasenya(){
 }
 
 createUser(){
-  this.absenciesService.user.create(this.usuari, this.contrasenya, this.callbackLogin.bind(this));
+  this.AS.user.create(this.usuari, this.contrasenya, this.callbackLogin.bind(this));
   this.isLoginModalOpen = false;
 }
 
 doLogin(){
-  this.absenciesService.user.login(this.usuari, this.contrasenya, this.callbackLogin.bind(this));
+  this.AS.user.login(this.usuari, this.contrasenya, this.callbackLogin.bind(this));
 }
 
 doLogout(){
-  this.absenciesService.user.logout(this.callbackLogout.bind(this));
+  this.AS.user.logout(this.callbackLogout.bind(this));
 }
 
 callbackLogin(success: boolean){
   // funció de callback per a les accions necessàries quan es
   // confirme o rebutge la petició de login.
   this.canDismiss = success;
-  this.isLoginModalOpen = !success;
-  this.absenciesService.loadDadesMestres();
+  this.isLoginModalOpen = !(true);
+  //this.modalCtrl.dismiss();
+  this.AS.loadDadesMestres();
+  this.AS.absences.get();
+  this.AS.guards.get()
 }
 
 callbackLogout(success: boolean){
@@ -169,9 +172,9 @@ callbackLogout(success: boolean){
   async llistaAbsencies() {
     var l_buttons: any[] = [];
     var a: Absence;
-    console.log('longitud del menu absencies: ', this.absenciesService.absences.list);
-    for (var i =0; i < this.absenciesService.absences.list.length; i++) {
-      a = this.absenciesService.absences.list[i];
+    console.log('longitud del menu absencies: ', this.AS.absences.list);
+    for (var i =0; i < this.AS.absences.list.length; i++) {
+      a = this.AS.absences.list[i];
       //a = this.absencies[i];
       l_buttons.push( {
         text: this.date2str(a.data),
@@ -223,24 +226,24 @@ callbackLogout(success: boolean){
 
   async openModal(absindex: number) {
     this.abs_index = absindex;
-    var ASA = this.absenciesService.absences.list;
+    var ASA = this.AS.absences.list;
     console.log('asa es: ',ASA, ' i vaig a carregar el index ', absindex);
     if (absindex >= 0) {
       this.absencia_id = ASA[absindex].id;
-      this.data_inici = this.absenciesService.absences.dates.date2str(ASA[absindex].data);
-      this.data_fi = this.absenciesService.absences.dates.date2str(ASA[absindex].data_fi);
+      this.data_inici = this.AS.absences.dates.date2str(ASA[absindex].data);
+      this.data_fi = this.AS.absences.dates.date2str(ASA[absindex].data_fi);
       this.es_dia_complet = ASA[absindex].dia_complet;
-      this.hora_inici = this.absenciesService.absences.dates.time2str(ASA[absindex].hora_ini);
-      this.hora_fi = this.absenciesService.absences.dates.time2str(ASA[absindex].hora_fi);
+      this.hora_inici = this.AS.absences.dates.time2str(ASA[absindex].hora_ini);
+      this.hora_fi = this.AS.absences.dates.time2str(ASA[absindex].hora_fi);
       console.log("al abrir modal, id: ",this.absencia_id);
       this.isModalOpen = true;
     }
     if (absindex == -1) {
       this.absencia_id = -1;
-      this.data_inici = this.absenciesService.absences.dates.date2str();
-      this.data_fi = this.absenciesService.absences.dates.date2str();
+      this.data_inici = this.AS.absences.dates.date2str();
+      this.data_fi = this.AS.absences.dates.date2str();
       this.es_dia_complet = true;
-      this.hora_inici = this.absenciesService.absences.dates.time2str();
+      this.hora_inici = this.AS.absences.dates.time2str();
       this.hora_fi = '23:59';
       this.isModalOpen = true;
     }
@@ -266,7 +269,7 @@ callbackLogout(success: boolean){
       justificada: false,
     }
     console.log("al tancar modal, amb id: ", absencia_modif.id);
-    this.absenciesService.absences.update(absencia_modif);
+    this.AS.absences.update(absencia_modif);
     // si no dóna error, actualitzar també a la variable local.
     // this.absencies[this.abs_index] = this.absencia;
     this.isModalOpen=false;
@@ -335,7 +338,7 @@ callbackLogout(success: boolean){
         text: 'Selecciona',
         role: 'OK',
         handler: data => {
-          this.absenciesService.select_user(data);
+          this.AS.select_user(data);
         }
       }]
     })

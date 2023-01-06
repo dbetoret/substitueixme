@@ -64,7 +64,7 @@ export class Tab3Page {
     var idh: string;
     this.horari = {};
     //this.horari.fields = {};
-    if (! this.aS.userLogged()){
+    if (! this.aS.user.is_logged_in){
       // Anar a la Tab 1 a loguejar.
     }
     //this.aS.t3_horari = this.horari;

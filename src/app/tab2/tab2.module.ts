@@ -11,6 +11,7 @@ import { ExploreContainerComponentModule } from '../explore-container/explore-co
 
 import { LlistaAbsenciesPageModule } from '../llista-absencies/llista-absencies.module'
 import { GuardiesComponent } from '../guardies/guardies.component';
+import { LoginComponent } from '../login/login.component';
 
 @NgModule({
   imports: [
@@ -23,7 +24,8 @@ import { GuardiesComponent } from '../guardies/guardies.component';
   ],
   declarations: [
     Tab2Page,
-    GuardiesComponent
+    GuardiesComponent,
+    LoginComponent
   ]
 })
 export class Tab2PageModule {}

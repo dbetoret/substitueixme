@@ -8,6 +8,7 @@ import { connectableObservableDescriptor } from 'rxjs/internal/observable/Connec
 import { format, parseISO, compareAsc } from 'date-fns';
 import { Guard, GuardJSON, Absence, AbsenceJSON } from './model/interfaces';
 import { HttpOptions } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
 
 // export const USER = new HttpContextToken<string>(() => '');
 //export const BASE_URL = 'http://localhost:8000/absencies/';
@@ -63,11 +64,19 @@ class Absences {
   private absencesUrl = BASE_URL+'api/absencies/';
   dates: Dates = new Dates();
   isAbsentIndex: Number = -1;
+  user_id: string;
 
   constructor(
     private http: HttpClient,
     private httpOptions: {headers: HttpHeaders, params: HttpParams}
   ) {}
+
+
+
+  // const loadUserData = async () => {
+  //   const u = await Preferences.get({key: 'user_id'});
+  //   this.user_id = u;
+  // }
 
   get(){
     this.http.get<AbsenceJSON[]>(this.absencesUrl, this.httpOptions)
@@ -223,6 +232,7 @@ class Guards {
   dia_setmana: string;
   ndia_setmana: number;
   guardies: Guard[];
+  user_id: string;
 
   get(){
     // Carregarem sempre totes les guàrdies, tot i que les pròpies es
@@ -233,7 +243,9 @@ class Guards {
     var parts: string[];
     var dia_setmana: string;
     var guard: Guard;
-    var user_id: string = localStorage.getItem('user_id');
+    //var user_id: string = localStorage.getItem('user_id');
+    // Capacitor 'preferences':
+    Preferences.get({ key: 'user_id'}).then((result) => {this.user_id = result.value;});
     this.http.get<GuardJSON[]>(this.guardsUrl, this.httpOptions)
     .pipe(
       catchError((err) => {
@@ -243,6 +255,8 @@ class Guards {
     )
     .subscribe(data => {
       console.log('guàrdies rebudes: ', data);
+      this.absenceGuards = {};
+      this.dailyGuards = {};
       for (var i in data){
         // preparem la info:
         date = this.dates.str2date(data[i].data);
@@ -268,8 +282,8 @@ class Guards {
           substitut: data[i].substitut,
           feina: data[i].feina 
         }
-        console.log ('tenim nova guard: ', guard, ' amb el guard_profe ', guard.id_professor, ' i el selfprofe ', user_id);
-        if (guard.id_professor.toString()==user_id){
+        console.log ('tenim nova guard: ', guard, ' amb el guard_profe ', guard.id_professor, ' i el selfprofe ', this.user_id);
+        if (guard.id_professor.toString()==this.user_id){
           if (!(data[i].data in this.absenceGuards)){
             this.absenceGuards[data[i].data]=[]
           }
@@ -288,12 +302,12 @@ class Guards {
 }
 
 class User {
-  id: number;
+  id: string;
   name: string;
   centre_id: number;
   centre_name: string;
   auth_token: string;
-  is_logged_in: boolean;
+  is_logged_in: number; // 0 undetermined, -1 needs login, 1 OK
   private usersURL: string = BASE_URL+'api/user/';
   private loginURL: string = BASE_URL+'api/login/';
   private logoutURL: string = BASE_URL+'api/logout/';
@@ -302,16 +316,35 @@ class User {
     private http: HttpClient ,
     private httpOptions: {headers: HttpHeaders, params: HttpParams}
   ) {
-    this.is_logged_in = !(localStorage.getItem('username') === null);
-    console.log(' el usuari ', localStorage.getItem('username'), ' esta a la creació de la classe');
     //this.httpOptions["observe"] = 'response'
+    this.is_logged_in = 0
+  }
+
+  async loadUserData(callback){
+    const i = await Preferences.get({key: 'user_id'})
+    this.id = i.value;
+    console.log('el valor de user_id de preferences es: ', i.value);
+    if (i.value == null){
+      // is cookie logged
+      this.is_logged_in = -1;
+    } else {{
+      let u = await Preferences.get({key: 'username'})
+      let a = await Preferences.get({key: 'auth_token'}) 
+      console.log('el valor del token de preferences es: ', a.value);
+      this.name = u.value;
+      this.auth_token = a.value;
+      this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', this.auth_token);
+      this.is_logged_in = 1;
+      callback(true);
+    }}
+      
   }
 
   select(name: string){
     if (name != this.name){
       this.name = name;
-      if (this.name == 'david') this.id = 1;
-      else this.id = 2;
+      if (this.name == 'david') this.id = '1';
+      else this.id = '2';
     }
     // this.httpOptions["params"] = this.httpOptions["params"].set('user', this.name);
     //this.httpOptions["headers"] = this.httpOptions["headers"].set('Authorization', this.id.toString())
@@ -331,11 +364,14 @@ class User {
         })
       .pipe(catchError(caugth => this.handleError(caugth, callback)))
       .subscribe(response => {
-        localStorage.setItem('user_id', response.body['user_id']);
-        localStorage.setItem('username', response.body['username']);
-        localStorage.setItem('Authorization', response.headers.get('Authorization'));
+        Preferences.set({key: 'user_id', value: response.body['user_id']});
+        Preferences.set({key: 'username', value: response.body['username']});
+        Preferences.set({key: 'auth_token', value: response.headers.get('Authorization')});
+        // localStorage.setItem('user_id', response.body['user_id']);
+        // localStorage.setItem('username', response.body['username']);
+        // localStorage.setItem('Authorization', response.headers.get('Authorization'));
         this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', response.headers.get('Authorization'))
-        this.is_logged_in = true;
+        this.is_logged_in = 1;
         callback(true);
       });
   }
@@ -355,12 +391,15 @@ class User {
         console.log('response body ', response.body);
         let b = response.body['user_id'];
         console.log('el id es ', b);
-        localStorage.setItem('user_id', response.body['user_id']);
-        localStorage.setItem('username', response.body['username']);
-        localStorage.setItem('Authorization', response.headers.get('Authorization'));
+        Preferences.set({key: 'user_id', value: response.body['user_id']});
+        Preferences.set({key: 'username', value: response.body['username']});
+        Preferences.set({key: 'auth_token', value: response.headers.get('Authorization')});
+        // localStorage.setItem('user_id', response.body['user_id']);
+        // localStorage.setItem('username', response.body['username']);
+        // localStorage.setItem('Authorization', response.headers.get('Authorization'));
         this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', response.headers.get('Authorization'))
 
-        this.is_logged_in = true;
+        this.is_logged_in = 1;
         callback(true);
         console.log('el resultado del login es: ',response);
       });
@@ -377,8 +416,11 @@ class User {
     )
     .pipe(catchError(caugth => this.handleError(caugth, callback)))
     .subscribe(data => {
-      localStorage.clear();
-      this.is_logged_in = false;
+      Preferences.remove({key: 'user_id'});
+      Preferences.remove({key: 'username'});
+      Preferences.remove({key: 'auth_token'});
+      //localStorage.clear();
+      this.is_logged_in = -1;
       callback(true);
     })
   }
@@ -390,8 +432,7 @@ class User {
   private handleError (error: HttpErrorResponse, callback){
     localStorage.removeItem('username');
     console.log(error.message);
-    this.is_logged_in = false;
-    callback(false);
+    this.is_logged_in = -1;
     return throwError(() => new Error('Error al fer login'));
   }
 }
@@ -458,14 +499,11 @@ export class AbsenciesService {
     private http: HttpClient) 
   { 
     this.llista_horesdies = new Map<string, Map<string,number>>();
-    if (this.user.is_logged_in){
-      this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', localStorage.getItem('Authorization'))
-      this.loadDadesMestres();
-      this.absences.get();
-      this.guards.get();
-    }
+    this.user.loadUserData(this.loadData.bind(this));
   }
 
+
+  
   select_user(data) {
     // si el login és correcte, recarreguem info.
     if (this.user.select(data)){
@@ -482,10 +520,6 @@ export class AbsenciesService {
       //this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', this.user.id.toString())
     }
     
-  }
-
-  userLogged() {
-    return (!(localStorage.getItem('username') === null)) ;
   }
 
   creaUsuari(usuari: string, contrasenya: string): boolean {
@@ -505,6 +539,10 @@ export class AbsenciesService {
   }
 
   loadDadesMestres(): void {
+    this.loadData();
+  }
+  
+  loadData(): void {
     var fh: any;
     this.franges_horaries.clear();
     this.espais.clear();
@@ -553,6 +591,8 @@ export class AbsenciesService {
                     }
                     console.log("t3_horari és: ", this.t3_horari);
                 });
+    this.absences.get();
+    this.guards.get();          
   }
 
   loadAbsencies(){

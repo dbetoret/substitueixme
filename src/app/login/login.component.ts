@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { ActionSheetController, IonModal, IonDatetime, ModalController, AlertController } from '@ionic/angular';
 import { AbsenciesService } from '../absencies.service';
 
@@ -10,9 +10,9 @@ import { AbsenciesService } from '../absencies.service';
 })
 export class LoginComponent implements OnInit {
 
-// variables de interfície modal
-canDismiss = true;
-isModalOpen = false;
+  @Input() canDismiss: boolean;
+  @Input() isModalOpen: boolean;
+  
 isLoginModalOpen = false;
 isRememberModalOpen = false;
 isCreateModalOpen = false;
@@ -28,6 +28,7 @@ contrasenya: string;
     private alertCtrl: AlertController,
     private modalCtrl: ModalController
   ) { }
+
 
   ngOnInit() {}
 
@@ -62,7 +63,7 @@ recordaContrasenya(){
 }
 
 createUser(){
-  this.absenciesService.user.create(this.usuari, this.contrasenya);
+  this.absenciesService.user.create(this.usuari, this.contrasenya, this.doLogin);
   this.isLoginModalOpen = false;
 }
 

@@ -3,7 +3,7 @@
     <ion-title>
       Substitucions
     </ion-title>
-    <ion-item button (click)="changeUser()"> 
+    <ion-item button (click)="showModal()"> 
       <ion-icon 
         icon="person-circle-outline"
         slot="end"
@@ -64,6 +64,8 @@
       <ion-col>
         <app-guardies></app-guardies>
       </ion-col>
+
+      
       <!-- <ion-col size="8" offset="2" class="ion-text-center">
         <ion-button expand="block">Absències del dia</ion-button>
       </ion-col>
@@ -71,8 +73,9 @@
         <ion-button expand="block">Històric de substitucions</ion-button>
       </ion-col> -->
     </ion-row>
-    
   </ion-grid>
+
+  <app-login> </app-login>
  
   <!-- <app-explore-container name="Tab 2 page"></app-explore-container> -->
 </ion-content>
