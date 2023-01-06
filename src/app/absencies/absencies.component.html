@@ -9,14 +9,15 @@
 
 <ion-accordion value="{{ dia.key }}" *ngFor="let dia of data.guards.absenceGuards | keyvalue">
   <ion-item slot="header" color="secondary">
-    <ion-label>{{ dia.key }}</ion-label>
+    <ion-label class="label-dia">{{ dates.dayofweek(dia.key) }} {{ dia.key }}</ion-label>
   </ion-item>
   <ion-list slot="content">
+    <!-- <ion-item detail="true" -->
     <ion-item detail="true"
       href="#" *ngFor="let g of dia.value">
-      <ion-label slot="start">
+      <ion-text  class="label-classe">
         {{g.hora}} {{g.grup}} {{g.materia}} 
-      </ion-label>
+      </ion-text>
     </ion-item>
   </ion-list>
 </ion-accordion>

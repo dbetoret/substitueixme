@@ -18,19 +18,19 @@
     <h1>Horari</h1>
 
 <!-- <horari></horari> -->
-<ion-grid>
+<ion-grid class="table-item"> 
   <ion-row>
-    <ion-col><div class="grid-col-div"></div></ion-col>
-    <ion-col *ngFor="let d of aS.llista_dies">
+    <ion-col size="1"><div class="grid-col-div"></div></ion-col>
+    <ion-col *ngFor="let d of aS.llista_dies" size="2">
       <div class="grid-col-div">{{ d }}</div>
     </ion-col>
   </ion-row>
   <ion-row *ngFor="let h of aS.llista_hores">
-    <ion-col>
+    <ion-col size="1">
       <div class="grid-col-div">{{ h }}</div>
     </ion-col>
-    <ion-col *ngFor="let d of aS.llista_dies">
-      <div class="casella{{ aS.llista_horesdies.get(h).get(d) }}" class="grid-col-div"
+    <ion-col *ngFor="let d of aS.llista_dies" size="2">
+      <div class="casella{{ aS.llista_horesdies.get(h).get(d) }}  grid-col-div"
       [innerHTML]="aS.t3_horari.get(aS.llista_horesdies.get(h).get(d).toString())"
       >
     </div>
@@ -169,7 +169,7 @@
 
     <ion-fab slot="fixed" horizontal="end" vertical="bottom" size="large">
       <ion-fab-button size="large" (click)="menuConfiguracio()">
-        <ion-icon name="menu-outline"></ion-icon>
+        <ion-icon name="menu-outline" class="fab-button"></ion-icon>
       </ion-fab-button>
     </ion-fab> 
     <!-- <app-explore-container name="Tab 3 page"></app-explore-container> -->

@@ -54,6 +54,12 @@ export class Dates {
     a = parseISO(valor);
     return this.date2str(a);
   }
+  dayofweek(data_iso: string): string{
+    var dies = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
+    var a = new Date();
+    a = parseISO (data_iso);
+    return dies[a.getDay()];
+  }
 }
 
 

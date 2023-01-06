@@ -3,3 +3,15 @@ ion-col {
     text-align: center;
 }
 
+* {
+    font-size: 0.9em;
+}
+
+.fab-button {
+    font-size: 2em;
+}
+
+ion-grid{
+    --ion-grid-columns: 11;
+    --ion-grid-column-padding: 3px;
+}

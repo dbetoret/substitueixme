@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Guardia } from '../guardia';
 import { Absencia, AbsenciaS } from '../absencia';
 import { DadesMestres } from '../dadesmestres';
-import { AbsenciesService  } from '../absencies.service';
+import { AbsenciesService, Dates  } from '../absencies.service';
 import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
 import { formatDate } from '@angular/common';
 import { LlistaAbsenciesPage } from '../llista-absencies/llista-absencies.page';
@@ -51,11 +51,13 @@ export class AbsenciesComponent implements OnInit {
   // justificada;
 
   //horari
+  dates: Dates; // útil per a treballar amb dates.
 
   constructor(private data: AbsenciesService) {  
     // this.data.absences.get();
     // this.data.guards.get();
     // this.guards = this.data.guards.AbsenceGuards; 
+    this.dates = new Dates();
     console.log("les guardies en abs.component son: ", this.data.guards.absenceGuards);
   }
 

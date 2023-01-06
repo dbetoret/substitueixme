@@ -23,14 +23,17 @@
     <ion-row [hidden]="AS.user.is_logged_in != 0"><ion-col>
       Carregant l'aplicació  
     </ion-col></ion-row>
+    <ion-row [hidden]="AS.user.is_logged_in != -1"><ion-col>
+      L'usuari no està autenticat. Utilitze el menú superior. 
+    </ion-col></ion-row>
     <ion-row class="ion-align-items-center" [hidden]="AS.user.is_logged_in != 1">
-      <ion-col size="8" offset="2" class="ion-text-center">
+      <ion-col class="ion-text-center">
         <ion-button [hidden]="AS.absences.isAbsentIndex != -1"
           expand="block" size="large"
           (click)="substitueixme()"
           >Substitueix-me!</ion-button>
         <ion-item [hidden]="AS.absences.isAbsentIndex == -1">
-          <ion-label><h1>Absència notificada</h1></ion-label>
+          <ion-label><h2>Absència notificada</h2></ion-label>
           <ion-button id="edita-absencia" fill="clear" (click)="openModal(AS.absences.isAbsentIndex)">
             <ion-icon slot="end" name="caret-forward-outline" ></ion-icon>
           </ion-button>
@@ -42,9 +45,9 @@
     <!-- ######################-->
     <!-- INTRODUCCIÓ DE TASQUES-->
     <!-- ######################-->
-    <ion-row><ion-col size="8" offset="2">
+    <ion-row><ion-col [hidden]="AS.user.is_logged_in != 1">
       <ion-accordion-group value="futures">
-        <h3>Introducció de tasques</h3>
+        <label>Introducció de tasques</label>
         <app-absencies></app-absencies>
       </ion-accordion-group>
     </ion-col></ion-row>
