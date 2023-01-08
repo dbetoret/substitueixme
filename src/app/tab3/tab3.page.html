@@ -1,10 +1,12 @@
 
   <ion-header [translucent]="true"> 
     <ion-toolbar>
-      <ion-title>
+      <!-- <ion-title>
         Configuració
-      </ion-title>
+      </ion-title> -->
       <ion-item button (click)="changeUser()"> 
+        <ion-label slot="end"
+        >{{ aS.user.name }}</ion-label>
         <ion-icon 
           icon="person-circle-outline"
           slot="end"

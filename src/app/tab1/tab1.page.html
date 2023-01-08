@@ -1,9 +1,11 @@
 <ion-header [translucent]="true">
   <ion-toolbar> 
-    <ion-title>
+    <!-- <ion-title>
       Absències
-    </ion-title>
+    </ion-title> -->
     <ion-item button (click)="showLogin()"> 
+      <ion-label slot="end"
+        >{{ AS.user.name }}</ion-label>
       <ion-icon 
         icon="person-circle-outline"
         slot="end"
@@ -34,7 +36,8 @@
           >Substitueix-me!</ion-button>
         <ion-item [hidden]="AS.absences.isAbsentIndex == -1">
           <ion-label><h2>Absència notificada</h2></ion-label>
-          <ion-button id="edita-absencia" fill="clear" (click)="openModal(AS.absences.isAbsentIndex)">
+          <ion-button id="edita-absencia" fill="clear" 
+          (click)="openModal(AS.absences.isAbsentIndex)">
             <ion-icon slot="end" name="caret-forward-outline" ></ion-icon>
           </ion-button>
         </ion-item>
@@ -45,11 +48,9 @@
     <!-- ######################-->
     <!-- INTRODUCCIÓ DE TASQUES-->
     <!-- ######################-->
-    <ion-row><ion-col [hidden]="AS.user.is_logged_in != 1">
-      <ion-accordion-group value="futures">
-        <label>Introducció de tasques</label>
-        <app-absencies></app-absencies>
-      </ion-accordion-group>
+    <ion-row><ion-col >
+      <app-absencies (notifica)="notifica($event)"
+      ></app-absencies>
     </ion-col></ion-row>
   </ion-grid>
 
@@ -63,7 +64,7 @@
     <ng-template>
       <ion-content [fullscreen]="false" class="component-content">
         <div *ngIf="AS.user.is_logged_in == 1">
-          <ion-row><ion-col>
+          <ion-row><ion-col class="ion-text-center">
             <ion-button (click)="doLogout()">Tanca la sessió</ion-button>
             <ion-button (click)="this.isLoginModalOpen=false">Torna</ion-button>
           </ion-col></ion-row>
@@ -89,11 +90,11 @@
                   <ion-label>Contrasenya</ion-label>
                   <ion-input type="password" [(ngModel)]="contrasenya" ></ion-input>
                 </ion-item> 
-                <ion-text 
+                <!-- <ion-text 
                   (click)="recordaContrasenya()">
                   <a href="#" (click)="recordaContrasenya()"
                   >Recordar contrasenya</a>
-                </ion-text> 
+                </ion-text>  -->
               </ion-item-group> 
               </ion-card-content>  
               <ion-item lines="none">
@@ -166,7 +167,7 @@
     <!-- MODAL D'INTRODUCCIÓ DE TASQUES-->
     <!-- ######################-->
     <ion-modal [isOpen]="isTaskModalOpen"
-      trigger="tasks" (willDismiss)="onLogin($event)">
+      trigger="tasks" (willDismiss)="setTasks($event)">
       <ng-template>
         <ion-header>
           <ion-toolbar>
@@ -176,18 +177,20 @@
         <ion-content [fullscreen]="true" class="component-content">
           <ion-row>
             <ion-col>
-              <ion-button></ion-button>
-            </ion-col>
-            <ion-col>
-              <ion-item><ion-text>hola</ion-text></ion-item>
-              <ion-item><ion-text>hola</ion-text></ion-item>
-              <ion-item><ion-text>hola</ion-text></ion-item>
+              <ion-item><ion-textarea
+              placeholder="Introdueix els comentaris o la feina que han de fer els alumnes durant la classe"
+              [autoGrow]="true" [(ngModel)]="taskText"
+              ></ion-textarea></ion-item>
             </ion-col>
           </ion-row>
+          <ion-row><ion-col>
+            <ion-button
+            (click)="setTasks()"
+            >Acceptar</ion-button>
+          </ion-col></ion-row>
         </ion-content>
       </ng-template>
     </ion-modal>
-
 
     <!-- #########################-->
     <!-- MODAL D'AFEGIR O EDITAR ABSÈNCIES-->
@@ -216,55 +219,78 @@
       <ion-list [inset]="true">
         <ion-accordion-group value="completa" [hidden]="!es_dia_complet">
           <ion-accordion value="start">
-          <ion-item slot="header">
-            <ion-label>Comença</ion-label>
-            <ion-note slot="end"> {{ data_inici }} </ion-note>
-          </ion-item>
-          <ion-datetime
-            #startDatetime
-            presentation="date"
-            slot="content"
-            min="2022-01-01"
-            max="2023-12-31"
-            (ionChange)="data_inici = str2str(startDatetime.value)"
-          ></ion-datetime>
-        </ion-accordion>
-        <ion-accordion value="end">
-          <ion-item slot="header">
-            <ion-label>Acaba</ion-label>
-            <ion-note slot="end"> {{ data_fi }} </ion-note>
-          </ion-item>
-          <ion-datetime
-            #endDatetime
-            presentation="date"
-            slot="content"
-            min="2022-01-01"
-            max="2023-12-31"
-            (ionChange)="data_fi = str2str(endDatetime.value)"
-          ></ion-datetime>
-        </ion-accordion>
+            <ion-item slot="header">
+              <ion-label>Comença</ion-label>
+              <ion-note slot="end"> {{ data_inici }} </ion-note>
+            </ion-item>
+            <ion-datetime
+              #startDatetime
+              presentation="date"
+              slot="content"
+              min="2022-01-01"
+              max="2023-12-31"
+              (ionChange)="data_inici = date.str2str(startDatetime.value)"
+            ></ion-datetime>
+          </ion-accordion>
+          <ion-accordion value="end">
+            <ion-item slot="header">
+              <ion-label>Acaba</ion-label>
+              <ion-note slot="end"> {{ data_fi }} </ion-note>
+            </ion-item>
+            <ion-datetime
+              #endDatetime
+              presentation="date"
+              slot="content"
+              min="2022-01-01"
+              max="2023-12-31"
+              (ionChange)="data_fi = date.str2str(endDatetime.value)"
+            ></ion-datetime>
+          </ion-accordion>
         </ion-accordion-group>
+        <ion-accordion-group value="parcial">
+          <ion-accordion value="data">
             <ion-item slot="header" [hidden]="es_dia_complet">
               <ion-label>Dia de l'absència</ion-label>
-              <ion-note slot="end"> {{ absDate }} </ion-note>
+              <ion-note slot="end"> {{ data_inici }} </ion-note>
             </ion-item>
-            <ion-datetime [hidden]="true"
+            <ion-datetime [hidden]="es_dia_complet"
               #absDatetime
               presentation="date"
               slot="content"
-              (onIonChange)="absDate = time2str(absDatetime.value)"
+              (ionChange)="data_inici = date.str2str(absDatetime.value)"
             ></ion-datetime>
-            <ion-label  [hidden]="true"
-              slot="content">Hora d'inici</ion-label>
-            <ion-datetime  [hidden]="true"
-              slot="content" presentation="time"></ion-datetime>
-            <ion-label  [hidden]="true"
-              slot="content">Hora d'acabament</ion-label>
-            <ion-datetime  [hidden]="true"
-              slot="content" presentation="time"></ion-datetime>
+          </ion-accordion>
+          <ion-accordion value="hora-ini">
+            <ion-item slot="header" [hidden]="es_dia_complet">
+              <ion-label>Hora d'inici</ion-label>
+              <ion-note slot="end"> {{ hora_ini }} </ion-note>
+            </ion-item>
+            <ion-datetime  [hidden]="es_dia_complet"
+            #iniHora
+            slot="content" presentation="time"
+            (ionChange)="hora_ini = iniHora.value.substring(11,16)"
+            ></ion-datetime>
+          </ion-accordion>
+          <ion-accordion value="hora-fi">
+            <ion-item slot="header" [hidden]="es_dia_complet">
+              <ion-label>Hora d'acabament</ion-label>
+              <ion-note slot="end"> {{ hora_fi }} </ion-note>
+            </ion-item>
+            <ion-datetime  [hidden]="es_dia_complet"
+            #fiHora
+            slot="content" presentation="time"
+            (ionChange)="hora_fi = fiHora.value.substring(11,16);"
+            ></ion-datetime>
+          </ion-accordion>
+        </ion-accordion-group>    
+        <div class="ion-align-items-center ion-text-center delete-button">
+          <ion-button color="danger" class="ion-align-items-center ion-text-center"
+          (click)="deleteAbsence()"
+          >Eliminar absència</ion-button></div>
       </ion-list>
+      
     </ion-content>
-    <ion-grid slot="content"> 
+    <ion-grid slot="content" [hidden]="true"> 
       <ion-row>
         <ion-col>
           <ion-datetime slot="start" presentation="time"></ion-datetime>

@@ -2,31 +2,43 @@
   guardies works!
 </p> -->
 
+<ion-row class="header-row">
+  <ion-col>
+    <ion-icon name="arrow-back-outline"  size="large"
+    (click)="previousDay()"></ion-icon>
+  </ion-col>
+  <ion-col size="8"  class="ion-text-center">
+    <p>{{ today_str }}</p>
+  </ion-col>
+  <ion-col>
+    <ion-icon name="arrow-forward-outline" size="large"
+    (click)="nextDay()"></ion-icon>
+  </ion-col>
+</ion-row>
 
-<!-- <ul class="absencies">
-  <li *ngFor="let absencia of absencies">
-    <a routerLink="/detail/{{ absencia.id }}">
-      <span class="badge">{{ absencia.id }}</span> {{ absencia.data }}
-    </a>
-  </li>
-</ul> -->
+<ion-row>
+  <ion-col size="8" offset="2" class="ion-text-left" 
+  *ngIf="! (data.guards.dailyGuards[today_str])">
+    <p>No hi ha ninguna guàrdia que cobrir.</p>
+  </ion-col>
+</ion-row>
 
-<!-- <ion-card *ngFor="let guardia of guardies">
-  <span class="badge"> {{ guardia.data }} </span>
-  <span class="badge"> {{ guardia.hora }} </span>
-  <span class="badge"> {{ guardia.professor }} </span>
-</ion-card> -->
-
-<ion-col size="8" offset="2" class="ion-text-left" *ngFor="let guard of data.guards.dailyGuards | keyvalue"> 
-  <ion-card *ngFor="let g of guard.value">
-    <ion-card-header>
-      <ion-card-title>{{g.grup}}</ion-card-title>
-      <ion-card-subtitle>{{g.espai}}</ion-card-subtitle>
-    </ion-card-header>
-    <ion-card-content>
-      <p>Materia: {{g.materia}}</p>
-      <p>Professor: {{g.professor}}</p>
-      <p>Feina a fer: {{g.feina}}</p>
-    </ion-card-content>
-  </ion-card>
-</ion-col>
+<ion-row
+  *ngIf="data.guards.dailyGuards[today_str]"   
+  >
+  <ion-col size="10" offset="1" class="ion-text-left"
+    > 
+    <!-- *ngFor="let guard of data.guards.dailyGuards[today_str] | keyvalue" -->
+    <ion-card *ngFor="let g of data.guards.dailyGuards[today_str]">
+      <ion-card-header>
+        <ion-card-title>{{g.grup}}</ion-card-title>
+        <ion-card-subtitle>{{g.espai}}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <p>Materia: {{g.materia}}</p>
+        <p>Professor: {{g.professor}}</p>
+        <p>Feina a fer: {{g.feina}}</p>
+      </ion-card-content>
+    </ion-card>
+  </ion-col>
+</ion-row>

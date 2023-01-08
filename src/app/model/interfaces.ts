@@ -4,6 +4,8 @@
 // L'únic que podem fer és assignar un professor o editar
 // la feina o comentaris, i amb el ID de la guàrdia es prou.
 export interface Guard {
+    id: string;
+    id_absencia: string;
     data: Date;
     hora: string;
     id_professor: number;
@@ -20,6 +22,8 @@ export interface Guard {
 }
 
 export interface GuardJSON { 
+    id: string;
+    id_absencia: string;
     data: string;
     hora: string;
     // Horari: Si no és meu, no m'interessa.

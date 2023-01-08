@@ -1,9 +1,11 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
+    <!-- <ion-title>
       Substitucions
-    </ion-title>
+    </ion-title> -->
     <ion-item button (click)="showModal()"> 
+      <ion-label slot="end"
+        >{{ data.user.name }}</ion-label>
       <ion-icon 
         icon="person-circle-outline"
         slot="end"
@@ -22,60 +24,10 @@
   </ion-header>
   <ion-grid>
     <ion-row><ion-col> </ion-col></ion-row>
-    <ion-row><ion-col> </ion-col></ion-row>
-    <ion-row class="ion-align-items-center">
-      <!-- <ion-col size="8" offset="2" class="ion-text-left"> 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>1 ESO</ion-card-title>
-            <ion-card-subtitle>Aula: A24</ion-card-subtitle>
-          </ion-card-header>
-          <ion-card-content>
-            <p>Materia: Història</p>
-            <p>Professor: Juan Palomo</p>
-            <p>Feina a fer: copiar 100 vegades</p>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-      <ion-col size="8" offset="2" class="ion-text-left"> 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>1 ESO</ion-card-title>
-            <ion-card-subtitle>Aula: A24</ion-card-subtitle>
-          </ion-card-header>
-          <ion-card-content>
-            <p>Professor: Juan Palomo</p>
-            <p>Feina a fer: copiar 100 vegades</p>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-      <ion-col size="8" offset="2" class="ion-text-left"> 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>1 ESO</ion-card-title>
-            <ion-card-subtitle>Aula: A24</ion-card-subtitle>
-          </ion-card-header>
-          <ion-card-content>
-            <p>Professor: Juan Palomo</p>
-            <p>Feina a fer: copiar 100 vegades</p>
-          </ion-card-content>
-        </ion-card>
-      </ion-col> -->
-      <ion-col>
-        <app-guardies></app-guardies>
-      </ion-col>
-
-      
-      <!-- <ion-col size="8" offset="2" class="ion-text-center">
-        <ion-button expand="block">Absències del dia</ion-button>
-      </ion-col>
-      <ion-col size="8" offset="2" class="ion-text-center">
-        <ion-button expand="block">Històric de substitucions</ion-button>
-      </ion-col> -->
-    </ion-row>
+    <app-guardies></app-guardies>
   </ion-grid>
 
-  <app-login> </app-login>
+  <!-- <app-login> </app-login> -->
  
   <!-- <app-explore-container name="Tab 2 page"></app-explore-container> -->
 </ion-content>

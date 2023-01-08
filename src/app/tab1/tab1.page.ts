@@ -6,6 +6,7 @@ import { format, parseISO } from 'date-fns';
 
 import { Absencia, AbsenciaS } from '../absencia';
 import { AbsenciesService, Dates } from '../absencies.service';
+import { LlistaAbsenciesPage } from '../llista-absencies/llista-absencies.page';
 import { Absence, AbsenceJSON } from '../model/interfaces'
 
 
@@ -25,22 +26,21 @@ export class Tab1Page {
   absenciaS: AbsenciaS;
   date: Dates = new Dates();
 
-  // variables de interfície modal
-  @ViewChild(IonModal) modal: IonModal;
-  canDismiss = true;
-  isModalOpen = false;
-  isLoginModalOpen = false;
-  modalType: string = 'login';
-  isTaskModalOpen = false;
-
-  // variables de dades de modal
+  // variables comuns
   usuari: string;
   contrasenya: string;
 
+  // variables de modal login
+  canDismiss = true;
+  isLoginModalOpen = false;
+  modalType: string = 'login';
 
+  // variables de modal absencies
+  @ViewChild(IonModal) modal: IonModal;
+  isModalOpen = false;
   abs_index: number;
-  nom: string; // useless
   absencia_id: number;
+  nom: string; // useless
   startDate = '';
   endDate = '';
   data_inici: string;
@@ -48,6 +48,12 @@ export class Tab1Page {
   hora_inici: string;
   hora_fi: string;
   es_dia_complet: boolean = true;
+
+  // variables de modal tasks
+  isTaskModalOpen = false;
+  taskDay: string;
+  taskIndex: number;
+  taskText: string;
 
   // altres variables
   message = 'Hola';
@@ -61,8 +67,18 @@ export class Tab1Page {
   ) {
     if (this.AS.user.is_logged_in == -1){
       this.isLoginModalOpen = true;
-      this.canDismiss = false;
+      //this.canDismiss = false;
     }
+    this.AS.currentUserId.subscribe(new_id => {
+      // console.log('el new_id al constructor de tab1 és: ', new_id);
+      if (new_id == '') {
+        this.isLoginModalOpen = true;
+        //this.canDismiss = false;
+      } else {
+        this.canDismiss = true;
+        this.isLoginModalOpen = false;
+      }
+    })
   }
 
   isWeekday = (dateString: string) => {
@@ -106,7 +122,7 @@ substitueixme(): void {
     extraescolar: false,
     justificada: false,
   }
-  console.log("al tancar modal, amb id: ", absencia_nova.id);
+  // console.log("al tancar modal, amb id: ", absencia_nova.id, " i l'absència ", absencia_nova);
   this.AS.absences.insert(absencia_nova);
 }
 
@@ -152,12 +168,11 @@ doLogout(){
 callbackLogin(success: boolean){
   // funció de callback per a les accions necessàries quan es
   // confirme o rebutge la petició de login.
-  this.canDismiss = success;
-  this.isLoginModalOpen = !(true);
+  this.canDismiss = true;
+  this.isLoginModalOpen = false;
+  //this.modal.dismiss();
   //this.modalCtrl.dismiss();
-  this.AS.loadDadesMestres();
-  this.AS.absences.get();
-  this.AS.guards.get()
+  this.AS.loadData();
 }
 
 callbackLogout(success: boolean){
@@ -172,7 +187,7 @@ callbackLogout(success: boolean){
   async llistaAbsencies() {
     var l_buttons: any[] = [];
     var a: Absence;
-    console.log('longitud del menu absencies: ', this.AS.absences.list);
+    // console.log('longitud del menu absencies: ', this.AS.absences.list);
     for (var i =0; i < this.AS.absences.list.length; i++) {
       a = this.AS.absences.list[i];
       //a = this.absencies[i];
@@ -187,19 +202,19 @@ callbackLogout(success: boolean){
     }
     l_buttons.push( 
       {
-        text: 'Nova',
+        text: 'Crear nova',
         role: 'new',
         icon: 'add',
         data: -1,
         handler: () => {
-          console.log('Crear absència');
+          // console.log('Crear absència');
         }
       },{
-        text: 'Cancel',
+        text: 'Cancel·la',
         role: 'cancel',
         icon: 'close',
         handler: () => {
-          console.log('Cancel·la menú absència');
+          // console.log('Cancel·la menú absència');
         }
       }
     )
@@ -212,7 +227,7 @@ callbackLogout(success: boolean){
     await actionSheet.present();
 
     const { role, data } = await actionSheet.onDidDismiss();
-    console.log('onDidDismiss resolved with role and data', role, data);
+    // console.log('onDidDismiss resolved with role and data', role, data);
     this.openModal(data)
   // Obrim el modal d'edició de absències amb el resultat del actionSheet.
 
@@ -226,29 +241,56 @@ callbackLogout(success: boolean){
 
   async openModal(absindex: number) {
     this.abs_index = absindex;
-    var ASA = this.AS.absences.list;
-    console.log('asa es: ',ASA, ' i vaig a carregar el index ', absindex);
+    var ASA = this.AS.absences;
+    // console.log('asa es: ',ASA, ' i vaig a carregar el index ', absindex);
     if (absindex >= 0) {
-      this.absencia_id = ASA[absindex].id;
-      this.data_inici = this.AS.absences.dates.date2str(ASA[absindex].data);
-      this.data_fi = this.AS.absences.dates.date2str(ASA[absindex].data_fi);
-      this.es_dia_complet = ASA[absindex].dia_complet;
-      this.hora_inici = this.AS.absences.dates.time2str(ASA[absindex].hora_ini);
-      this.hora_fi = this.AS.absences.dates.time2str(ASA[absindex].hora_fi);
-      console.log("al abrir modal, id: ",this.absencia_id);
+      this.absencia_id = ASA.list[absindex].id;
+      this.data_inici = ASA.dates.date2str(ASA.list[absindex].data);
+      this.data_fi = ASA.dates.date2str(ASA.list[absindex].data_fi);
+      this.es_dia_complet = ASA.list[absindex].dia_complet;
+      this.hora_inici = ASA.dates.time2str(ASA.list[absindex].hora_ini);
+      this.hora_fi = ASA.dates.time2str(ASA.list[absindex].hora_fi);
+      // console.log("al abrir modal, id: ",this.absencia_id);
       this.isModalOpen = true;
     }
     if (absindex == -1) {
       this.absencia_id = -1;
-      this.data_inici = this.AS.absences.dates.date2str();
-      this.data_fi = this.AS.absences.dates.date2str();
+      this.data_inici = ASA.dates.date2str();
+      this.data_fi = ASA.dates.date2str();
       this.es_dia_complet = true;
-      this.hora_inici = this.AS.absences.dates.time2str();
+      this.hora_inici = ASA.dates.time2str();
       this.hora_fi = '23:59';
       this.isModalOpen = true;
     }
   }
 
+  async deleteAbsence() {
+    const alert = await this.alertCtrl.create({
+      header: 'Atenció!',
+      message: "Esborrar l'absència implica també esborrar totes les guàrdies associades",
+      buttons: [
+        {
+          text: 'Cancel·la',
+          role: 'cancel',
+          handler: () => {
+
+          }
+        }, {
+          text: 'Esborra',
+          role: 'confirm',
+          handler: () => {
+            // console.log("des del menú, borrem l'absencia ", this.absencia_id, "que està a l'índex ", this.abs_index);
+            this.AS.absences.delete(this.abs_index);
+            this.AS.guards.deleteAbsencia(this.absencia_id);
+            this.isModalOpen = false;
+            //window.location.reload()
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
 
   modal_cancel() {
     this.modal.dismiss(null, 'cancel');
@@ -268,8 +310,9 @@ callbackLogout(success: boolean){
       extraescolar: false,
       justificada: false,
     }
-    console.log("al tancar modal, amb id: ", absencia_modif.id);
-    this.AS.absences.update(absencia_modif);
+    // console.log("al tancar modal, amb id: ", absencia_modif.id);
+    this.AS.absences.update(absencia_modif, this.abs_index);
+    this.AS.guards.get();
     // si no dóna error, actualitzar també a la variable local.
     // this.absencies[this.abs_index] = this.absencia;
     this.isModalOpen=false;
@@ -287,18 +330,18 @@ callbackLogout(success: boolean){
   }
 
   print_nom(event: any, data: any){
-    console.log('el valor de nom és: ', this.nom);
+    // console.log('el valor de nom és: ', this.nom);
   }
 
   date2str(valor: Date = null): string {
-    console.log('vaig a convertir ', valor);
+    // console.log('vaig a convertir ', valor);
     //return format(valor, 'dd-MM-yyyy');
     if (valor == null){
       valor = new Date();
     }
     return format(valor, 'yyyy-MM-dd');
-    console.log('vaig a convertir ', valor);
-    return valor.toString();
+    // console.log('vaig a convertir ', valor);
+    // return valor.toString();
   }
   str2date(valor: string): Date {
     return parseISO(valor);
@@ -343,6 +386,27 @@ callbackLogout(success: boolean){
       }]
     })
     alert.present();
+  }
+
+  notifica(guardia: string){
+    let params = guardia.split('#');
+    this.taskDay = params[0];
+    let taskHour = params[1];
+    this.taskIndex = -1;
+    let llista = this.AS.guards.absenceGuards[this.taskDay];
+    // console.log('llista es ', llista, ' amb long ', llista.length, ' i busque la hora ', taskHour)
+    for ( var i = 0; i < llista.length; i++){
+      if (llista[i].hora == taskHour){
+        this.taskIndex = i;
+        this.taskText = this.AS.guards.absenceGuards[this.taskDay][i].feina;
+      }
+    }
+    this.isTaskModalOpen = true;
+  }
+
+  setTasks(){
+    this.AS.guards.setTasks(this.taskDay, this.taskIndex, this.taskText);
+    this.isTaskModalOpen = false;
   }
 
 }

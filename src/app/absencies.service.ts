@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Absencia, AbsenciaS } from './absencia';
 import { DadesMestres, Franja_horaria, Espai, Grup, Materia, Horari } from './dadesmestres';
-import { Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
 import { format, parseISO, compareAsc } from 'date-fns';
@@ -11,7 +11,7 @@ import { HttpOptions } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 
 // export const USER = new HttpContextToken<string>(() => '');
-//export const BASE_URL = 'http://localhost:8000/absencies/';
+// export const BASE_URL = 'http://localhost:8000/absencies/';
 export const BASE_URL = 'https://substitueixme.herokuapp.com/absencies/'
 
 export class Dates {
@@ -69,15 +69,15 @@ class Absences {
   guardList: Guard[] = [];
   private absencesUrl = BASE_URL+'api/absencies/';
   dates: Dates = new Dates();
-  isAbsentIndex: Number = -1;
+  isAbsentIndex: number = -1;
   user_id: string;
+  // service: AbsenciesService;
 
   constructor(
     private http: HttpClient,
-    private httpOptions: {headers: HttpHeaders, params: HttpParams}
+    private httpOptions: {headers: HttpHeaders, params: HttpParams},
+    private service: AbsenciesService
   ) {}
-
-
 
   // const loadUserData = async () => {
   //   const u = await Preferences.get({key: 'user_id'});
@@ -157,16 +157,16 @@ class Absences {
     // return this.list;
   }
   
-
   push(){}
 
   insert(ab: AbsenceJSON){
     var a: Absence;
     var b: Date;
+    var new_index: number;
     a = {
       id: ab.id,
       data: this.dates.str2date(ab.data),
-      data_fi: this.dates.str2date(ab.data_fi),
+      data_fi: this.dates.str2date(ab.data_fi, '23', '59'),
       hora_ini: this.dates.str2time(ab.hora_ini),
       hora_fi: this.dates.str2time(ab.hora_fi),
       dia_complet: ab.dia_complet,
@@ -174,28 +174,42 @@ class Absences {
       justificada: ab.justificada
     };
     b = new Date();
+    console.log('En insertar està absent, entre ', a.data.toString(), ' i ', a.data_fi.toString());
     if (compareAsc(a.data, b) != 1 && compareAsc(a.data_fi, b) != -1){
-      console.log('En insertar està absent, entre ', a.data.toString(), ' i ', a.data_fi.toString());
-      this.isAbsentIndex = this.list.push(a) -1;
+      new_index = this.list.push(a) -1
+      this.isAbsentIndex = new_index;
     } else {
-      this.list.push (a);
+      new_index = this.list.push (a);
     }
-    this.update(ab);
+    this.update(ab, new_index);
   }
 
-  update(objecte: AbsenceJSON) {
+  update(objecte: AbsenceJSON, index:number){
     // rep una AbsenceJSON, amb les dates en format cadena.
     // Envia la info al servidor, i si és OK, actualitza a la llista local.
-    console.log('actualitzar absència de: ', objecte["data"] , " amb id ",objecte["id"]);
-    console.log(JSON.stringify(objecte));
+    var id_sql = 0;
+    // console.log('actualitzar absència de: ', objecte["data"] , " amb id ",objecte["id"]);
+    // console.log(JSON.stringify(objecte));
     this.http.post<AbsenceJSON>(this.absencesUrl, JSON.stringify(objecte), this.httpOptions)
       .pipe( catchError( (err) => {
           return throwError(err);
       }) )
       .subscribe( data  => {
-        console.log('rebut de lactualització de absencia: ',data);
-      })
-      ; 
+        id_sql = data['id'];
+        this.list[index].id = id_sql;
+        this.service.guards.get();
+      });
+  }
+
+  delete(index: number){
+    let id = this.list[index].id;
+    let url_esborrar = this.absencesUrl+id.toString()+'/';
+    this.http.delete(url_esborrar, this.httpOptions)
+    .subscribe()
+    if (index == this.isAbsentIndex){
+      this.isAbsentIndex = -1;
+    }
+    this.list.splice(index);
   }
 }
 
@@ -276,6 +290,8 @@ class Guards {
           parseInt(data[i].data.split('-')[2])
         ).getDay()];
         guard = {
+          id: data[i].id,
+          id_absencia: data[i].id_absencia,
           data: date,
           hora: data[i].hora,
           id_professor: data[i].id_professor,
@@ -288,7 +304,7 @@ class Guards {
           substitut: data[i].substitut,
           feina: data[i].feina 
         }
-        console.log ('tenim nova guard: ', guard, ' amb el guard_profe ', guard.id_professor, ' i el selfprofe ', this.user_id);
+        // console.log ('tenim nova guard: ', guard, ' amb el guard_profe ', guard.id_professor, ' i el selfprofe ', this.user_id);
         if (guard.id_professor.toString()==this.user_id){
           if (!(data[i].data in this.absenceGuards)){
             this.absenceGuards[data[i].data]=[]
@@ -302,8 +318,33 @@ class Guards {
           this.dailyGuards[data[i].data].push(guard)
         }
       }
-      console.log ('la carrega de absenceguards és: ', this.absenceGuards, ' i de Daily ', this.dailyGuards);
+      // console.log ('la carrega de absenceguards és: ', this.absenceGuards, ' i de Daily ', this.dailyGuards);
     })
+  }
+
+  setTasks (day: string, i: number, taskText: string) {
+    console.log('volem establir feina per al ', day, ' amb index ', i);
+    if (this.absenceGuards[day][i].feina != taskText){
+      let body = {guard_id: this.absenceGuards[day][i].id, tasks: taskText}
+    
+      this.http.post<GuardJSON[]>(this.guardsUrl, JSON.stringify(body),  this.httpOptions)
+      .pipe(
+      catchError((err) => {
+        console.log(err);
+        return throwError(err);
+      })).subscribe();
+      this.absenceGuards[day][i].feina = taskText;
+    }
+  }
+
+  deleteAbsencia(id: number) {
+    for (var dia in this.absenceGuards) {
+      if (this.absenceGuards[dia].length > 0)
+        if (this.absenceGuards[dia][0].id_absencia == id.toString()){
+          delete this.absenceGuards[dia];
+        }
+
+    }
   }
 }
 
@@ -323,20 +364,21 @@ class User {
     private httpOptions: {headers: HttpHeaders, params: HttpParams}
   ) {
     //this.httpOptions["observe"] = 'response'
-    this.is_logged_in = 0
+    this.id = '';
+    this.is_logged_in = 0;
   }
 
   async loadUserData(callback){
     const i = await Preferences.get({key: 'user_id'})
     this.id = i.value;
-    console.log('el valor de user_id de preferences es: ', i.value);
+    // console.log('el valor de user_id de preferences es: ', i.value);
     if (i.value == null){
       // is cookie logged
       this.is_logged_in = -1;
     } else {{
       let u = await Preferences.get({key: 'username'})
       let a = await Preferences.get({key: 'auth_token'}) 
-      console.log('el valor del token de preferences es: ', a.value);
+      // console.log('el valor del token de preferences es: ', a.value);
       this.name = u.value;
       this.auth_token = a.value;
       this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', this.auth_token);
@@ -358,7 +400,7 @@ class User {
   }
 
   create(name: string, pass: string, callback: any){
-    console.log('vaig a insertar usuari ', name);
+    // console.log('vaig a insertar usuari ', name);
     this.http.post(this.usersURL, {
           'user':     name, 
           'password': pass,
@@ -377,13 +419,14 @@ class User {
         // localStorage.setItem('username', response.body['username']);
         // localStorage.setItem('Authorization', response.headers.get('Authorization'));
         this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', response.headers.get('Authorization'))
+        this.name = response.body['username'];
         this.is_logged_in = 1;
         callback(true);
       });
   }
 
   login(name: string, pass: string, callback: any){
-    console.log("a fer el login per a ", name, ' amb la ', pass);
+    // console.log("a fer el login per a ", name, ' amb la ', pass);
     this.http.post<any>(this.loginURL, {
           'user':     name,
           'password': pass,
@@ -394,9 +437,9 @@ class User {
         })
       .pipe(catchError(caugth => this.handleError(caugth, callback)))
       .subscribe(response => {
-        console.log('response body ', response.body);
+        // console.log('response body ', response.body);
         let b = response.body['user_id'];
-        console.log('el id es ', b);
+        // console.log('el id es ', b);
         Preferences.set({key: 'user_id', value: response.body['user_id']});
         Preferences.set({key: 'username', value: response.body['username']});
         Preferences.set({key: 'auth_token', value: response.headers.get('Authorization')});
@@ -404,10 +447,10 @@ class User {
         // localStorage.setItem('username', response.body['username']);
         // localStorage.setItem('Authorization', response.headers.get('Authorization'));
         this.httpOptions['headers'] = this.httpOptions['headers'].set('Authorization', response.headers.get('Authorization'))
-
+        this.name = response.body['username'];
         this.is_logged_in = 1;
         callback(true);
-        console.log('el resultado del login es: ',response);
+        // console.log('el resultado del login es: ',response);
       });
   }
 
@@ -427,6 +470,9 @@ class User {
       Preferences.remove({key: 'auth_token'});
       //localStorage.clear();
       this.is_logged_in = -1;
+      this.id='';
+      this.name='';
+      this.auth_token='';
       callback(true);
     })
   }
@@ -461,7 +507,7 @@ export class AbsenciesService {
 
 
   user = new User(this.http, this.httpOptions);
-  absences = new Absences(this.http, this.httpOptions);
+  absences = new Absences(this.http, this.httpOptions, this);
   guards = new Guards(this.http, this.httpOptions);
   
   // times = new Times();
@@ -499,7 +545,12 @@ export class AbsenciesService {
   
   private dates: any[];
   
-  
+  private linkUser = new BehaviorSubject(this.user.id);
+  currentUserId = this.linkUser.asObservable();
+
+  setUserId(new_id: string){
+    this.linkUser.next(new_id);
+  }
   
   constructor(
     private http: HttpClient) 
@@ -549,6 +600,7 @@ export class AbsenciesService {
   }
   
   loadData(): void {
+    this.linkUser.next(this.user.id);
     var fh: any;
     this.franges_horaries.clear();
     this.espais.clear();
@@ -563,9 +615,9 @@ export class AbsenciesService {
     .pipe(
       catchError(this.handleError<DadesMestres>('getLogin'))
     ).subscribe(dm => { 
-                    console.log("incoming dm: ", dm);
+                    // console.log("incoming dm: ", dm);
                     this.dadesMestres = dm;
-                    console.log ("dadesMestres carregue amb: ", this.dadesMestres);
+                    // console.log ("dadesMestres carregue amb: ", this.dadesMestres);
                     //this.centres = dm.centres;
                     //this.usuaris = dm.usuaris;
                     // DEFINIM LA INTERFÍCIE D'ESPAIS I GRUPS, PERÒ NO SON ARRAYS!!!!
@@ -595,7 +647,7 @@ export class AbsenciesService {
                       this.llista_horesdies.get(fh.hinici).set(fh.dia_setmana, parseInt(fhi));
                       this.t3_horari.set(fhi.toString(),  this.carrega_text(fhi));
                     }
-                    console.log("t3_horari és: ", this.t3_horari);
+                    // console.log("t3_horari és: ", this.t3_horari);
                 });
     this.absences.get();
     this.guards.get();          
@@ -656,7 +708,7 @@ export class AbsenciesService {
     // actualitza l'horari amb id_horari idh a la base de dades, segons la info de this.horari que està actualitzada.
     var url: string = BASE_URL + 'api/horari/'+idh+'/';
     var cos: string = JSON.stringify(this.horari.get(idh));
-    console.log('horari stringify: ', cos)
+    // console.log('horari stringify: ', cos)
     this.http.post<Horari>(url, cos, this.httpOptions)
       .pipe(
         catchError(this.handleError<Horari>('Actualitzar horari'))
@@ -670,7 +722,7 @@ export class AbsenciesService {
     if (tipus == 'grup') {
       url = BASE_URL + 'api/grups/';
       cos = JSON.stringify(Array.from(this.grups));
-      console.log ('grups JSON: ', cos, this.grups); 
+      // console.log ('grups JSON: ', cos, this.grups); 
       this.http.post<Grup>(url, cos, this.httpOptions)
       .pipe(
         catchError(this.handleError<Grup>('Actualitzar '+tipus))
@@ -679,7 +731,7 @@ export class AbsenciesService {
     if (tipus == 'espai') {
       url = BASE_URL + 'api/espais/';
       cos = JSON.stringify(Array.from(this.espais));
-      console.log ('espais JSON: ', cos, this.espais); 
+      // console.log ('espais JSON: ', cos, this.espais); 
       this.http.post<Espai>(url, cos, this.httpOptions)
       .pipe(
         catchError(this.handleError<Espai>('Actualitzar '+tipus))
@@ -688,7 +740,7 @@ export class AbsenciesService {
     if (tipus == 'matèria') {
       url = BASE_URL + 'api/materies/';
       cos = JSON.stringify(Array.from(this.materies));
-      console.log ('materies JSON: ', cos, this.materies); 
+      // console.log ('materies JSON: ', cos, this.materies); 
       this.http.post<Materia>(url, cos, this.httpOptions)
       .pipe(
         catchError(this.handleError<Materia>('Actualitzar '+tipus))
@@ -724,8 +776,8 @@ export class AbsenciesService {
   // }
 
   updateAbsencia(id: number, objecte: AbsenciaS): Observable<any> {
-    console.log('actualitzar absència de: ', objecte["data"] , " amb id ", id);
-    console.log(JSON.stringify(objecte));
+    // console.log('actualitzar absència de: ', objecte["data"] , " amb id ", id);
+    // console.log(JSON.stringify(objecte));
     return this.http.post<Absencia>(this.absenciesUrl, JSON.stringify(objecte), this.httpOptions)
       .pipe(
         catchError(this.handleError<Absencia>('Actualitzar usuari'))
@@ -741,14 +793,14 @@ export class AbsenciesService {
   }
 
   date2str(valor: Date = null): string {
-    console.log('vaig a convertir ', valor);
+    // console.log('vaig a convertir ', valor);
     //return format(valor, 'dd-MM-yyyy');
     if (valor == null){
       valor = new Date();
     }
     return format(valor, 'yyyy-MM-dd');
-    console.log('vaig a convertir ', valor);
-    return valor.toString();
+    // console.log('vaig a convertir ', valor);
+    // return valor.toString();
   }
   str2date(valor: string): Date {
     return parseISO(valor);

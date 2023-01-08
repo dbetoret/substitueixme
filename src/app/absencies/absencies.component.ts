@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 
 import { Guardia } from '../guardia';
 import { Absencia, AbsenciaS } from '../absencia';
@@ -52,17 +52,22 @@ export class AbsenciesComponent implements OnInit {
 
   //horari
   dates: Dates; // útil per a treballar amb dates.
+  @Output() notifica = new EventEmitter();
 
   constructor(private data: AbsenciesService) {  
     // this.data.absences.get();
     // this.data.guards.get();
     // this.guards = this.data.guards.AbsenceGuards; 
     this.dates = new Dates();
-    console.log("les guardies en abs.component son: ", this.data.guards.absenceGuards);
+    // console.log("les guardies en abs.component son: ", this.data.guards.absenceGuards);
   }
 
   ngOnInit(): void {
   
+  }
+
+  openTasksModal(dia: string, hora: string){
+    this.notifica.emit(dia.concat('#').concat(hora))
   }
 
   // getAbsencies(): Absencia[]{

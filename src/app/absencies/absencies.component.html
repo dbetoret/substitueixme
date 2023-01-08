@@ -7,20 +7,30 @@
   </li>
 </ul> -->
 
-<ion-accordion value="{{ dia.key }}" *ngFor="let dia of data.guards.absenceGuards | keyvalue">
-  <ion-item slot="header" color="secondary">
-    <ion-label class="label-dia">{{ dates.dayofweek(dia.key) }} {{ dia.key }}</ion-label>
-  </ion-item>
-  <ion-list slot="content">
-    <!-- <ion-item detail="true" -->
-    <ion-item detail="true"
-      href="#" *ngFor="let g of dia.value">
-      <ion-text  class="label-classe">
-        {{g.hora}} {{g.grup}} {{g.materia}} 
-      </ion-text>
+<!-- <ion-accordion-group value="futures">
+  <label>Introducció de tasques</label>
+  <app-absencies></app-absencies>
+</ion-accordion-group> -->
+
+<ion-accordion-group value="futures">
+  <label *ngIf="(data.guards.absenceGuards | json) != '{}'"
+  >Introducció de tasques</label>
+  <ion-accordion value="{{ dia.key }}" *ngFor="let dia of data.guards.absenceGuards | keyvalue">
+    <ion-item slot="header" color="secondary">
+      <ion-label class="label-dia">{{ dates.dayofweek(dia.key) }} {{ dia.key }}</ion-label>
     </ion-item>
-  </ion-list>
-</ion-accordion>
+    <ion-list slot="content">
+      <!-- <ion-item detail="true" -->
+      <ion-item button detail="true"
+        *ngFor="let g of dia.value"
+        (click)="openTasksModal(dia.key, g.hora);">
+        <ion-text  class="label-classe">
+          {{ g.hora }} {{ g.grup }} {{ g.materia }} 
+        </ion-text>
+      </ion-item>
+    </ion-list>
+  </ion-accordion>
+</ion-accordion-group>
 
 <!-- <ion-accordion value="{{ dia.data }}" *ngFor="let dia of guardies; index as i">
   <ion-item slot="header" color="secondary">
